@@ -2042,9 +2042,9 @@ function startViz(){
     };
 
     // ── 이벤트 ──
-    p.mouseMoved=function(){tc.x=p.mouseX;tc.y=p.mouseY;tc.on=true};
+    p.mouseMoved=function(){tc.x=p.mouseX;tc.y=p.mouseY;tc.on=extremeTouch};
     p.mouseDragged=function(){
-      tc.x=p.mouseX;tc.y=p.mouseY;tc.on=true;
+      tc.x=p.mouseX;tc.y=p.mouseY;tc.on=extremeTouch;
       if(calliActive) calliPush(calliActive,p.mouseX,p.mouseY);
     };
     p.mousePressed=function(){
@@ -2054,8 +2054,8 @@ function startViz(){
       calliActive=calliNewStroke(hue);
       calliPush(calliActive,p.mouseX,p.mouseY);
       calliStrokes.push(calliActive);if(calliStrokes.length>20)calliStrokes.shift();
-      // 버스트도 동시에
-      handleTouch(p.mouseX,p.mouseY);
+      // 버스트는 아주 신약/신강에서만
+      if(extremeTouch) handleTouch(p.mouseX,p.mouseY);
     };
     p.mouseReleased=function(){
       if(calliActive&&calliActive.pts.length>=2){
@@ -2069,18 +2069,18 @@ function startViz(){
     p.touchStarted=function(event){
       if(event&&event.target.tagName!=='CANVAS')return true;
       if(p.touches.length>0){
-        tc.x=p.touches[0].x;tc.y=p.touches[0].y;tc.on=true;
+        tc.x=p.touches[0].x;tc.y=p.touches[0].y;tc.on=extremeTouch;
         const hue=calliNextHue();
         calliActive=calliNewStroke(hue);
         calliPush(calliActive,tc.x,tc.y);
         calliStrokes.push(calliActive);if(calliStrokes.length>20)calliStrokes.shift();
-        handleTouch(tc.x,tc.y);
+        if(extremeTouch) handleTouch(tc.x,tc.y);
       }return false;
     };
     p.touchMoved=function(event){
       if(!calliActive)return true;
       if(p.touches.length>0){
-        tc.x=p.touches[0].x;tc.y=p.touches[0].y;tc.on=true;
+        tc.x=p.touches[0].x;tc.y=p.touches[0].y;tc.on=extremeTouch;
         if(calliActive) calliPush(calliActive,tc.x,tc.y);
       }return false;
     };
