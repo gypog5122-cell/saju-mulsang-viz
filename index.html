@@ -542,10 +542,12 @@ function startViz(){
     let tc={x:0,y:0,on:false};
     let bursts=[];
     let particles=[];
-    // ── 마우스 감도: 신약일수록 예민(크게 반응), 신강일수록 둔감(거의 요동 없음) ──
-    const touchSense=Math.max(.5,Math.min(2.5,1.4-str*.95)); // str -1(신약)→2.35, +1(신강)→0.5
-    const volatileSubj=!isStrong;  // 신약 주체는 건드리면 폭발적으로 타오름
-    let touchHeat=0,lastBoom=-999; // 호버 열 축적 → 폭발 트리거
+    // ── 마우스 감도: "아주 신약/아주 신강"일 때만 반응. 그 사이는 평범(반응 없음) ──
+    const sAbs=Math.abs(str);
+    const extremeTouch=sAbs>=.5;                       // 아주 신약 또는 아주 신강
+    const touchSense=extremeTouch?(str<0?2.2:.55):1;   // 아주신약=예민 / 아주신강=둔감 / 그외=보통
+    const volatileSubj=str<=-.5;                       // 아주 신약만 건드리면 폭발
+    let touchHeat=0,lastBoom=-999;
     // 캘리그래피 선 시스템 (한글우주진화.html 50% 축소)
     let calliStrokes=[];
     let calliActive=null;
@@ -1923,20 +1925,14 @@ function startViz(){
         p.blendMode(p.BLEND);
       }
 
-      // 9. 자양분 햇빛 (nurture)
+      // 9. 자양분 기운 (nurture) — 해가 아니라 위에서 내려오는 은은한 빛무리
       if(st.nurture && !st.storm){
-        p.blendMode(p.ADD);p.noStroke();
-        const ng=hslToRgb(50,70,70);
-        for(let i=0;i<12;i++){
-          const ag=Math.PI*.25+i*Math.PI*.04;
-          const sx=W*.7,sy=H*.15;
-          p.fill(ng[0],ng[1],ng[2],20*a);
-          for(let step=0;step<12;step++){
-            const rr=step*25;
-            p.ellipse(sx+Math.cos(ag)*rr,sy+Math.sin(ag)*rr,30,30);
-          }
-        }
-        p.blendMode(p.BLEND);
+        const ctx=p.drawingContext;ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=a;
+        const gx=W*.72,gy=H*.1,gr=hslToRgb(48,55,74),R=Math.min(W,H)*.34;
+        const grd=ctx.createRadialGradient(gx,gy,0,gx,gy,R);
+        grd.addColorStop(0,`rgba(${gr.join(',')},0.09)`);grd.addColorStop(.6,`rgba(${gr.join(',')},0.03)`);grd.addColorStop(1,'transparent');
+        ctx.fillStyle=grd;ctx.beginPath();ctx.arc(gx,gy,R,0,Math.PI*2);ctx.fill();
+        ctx.restore();
       }
     }
 
@@ -2117,7 +2113,8 @@ function startViz(){
     }
     // 마우스가 주체에 가까워지면 감도만큼 발광하고, 신약이면 열이 쌓여 폭발한다
     function drawTouchAura(){
-      if(!tc.on){touchHeat=Math.max(0,touchHeat-.03);return;}
+      // 아주 신약(volatile)일 때만 발광·폭발. 그 외(보통·아주 신강)는 가운데 해 같은 효과 없음
+      if(!volatileSubj||!tc.on){touchHeat=Math.max(0,touchHeat-.03);return;}
       const c=subjectCenter(),R=c.r*touchSense;
       const d=Math.hypot(tc.x-c.x,tc.y-c.y);
       const prox=Math.max(0,1-d/R);
