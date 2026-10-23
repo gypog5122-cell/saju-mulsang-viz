@@ -55,6 +55,7 @@
   .pillar small{font-size:10px;color:#9b91aa;display:block;margin-top:4px}
   .or{gap:10px;margin:12px 0}.ol{width:40px;font-size:12px;color:#c6bcd2;text-align:left}.ob{height:5px}.on2{font-size:11px;width:24px}
   .siprow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #ffffff08;color:#bfb4cd}.siprow b{color:#e3d5bc;font-weight:400}
+  #ip .rd{margin:9px 0;padding-left:11px;border-left:2px solid #e8d5a033;color:#c3b8d2;font-size:12.5px;line-height:1.72}#ip .rd b{color:#e8d5a0;font-weight:600}
   #ip details{border-top:1px solid #ffffff12;margin-top:20px;padding-top:14px}#ip summary{cursor:pointer;color:#d7c9df;font-size:12px}
   .swatches{display:flex;gap:7px;margin:12px 0}.swatches i{width:25px;height:25px;border:1px solid #ffffff30;border-radius:50%;display:inline-block}
   #sceneLabel{left:calc((100vw - var(--side))/2);width:calc(100vw - var(--side) - 70px);bottom:28px;max-width:760px}
@@ -2223,6 +2224,39 @@ function sajuNature(info){
   return `${IL[info.ilgan.h]}입니다. ${strong} 기운의 짜임으로 보면 ${DOM[info.dominant]}입니다.${missNote}`;
 }
 
+// 이 사주 구성에서 드러나는 과제·보완점 자동 해석
+function sajuReading(info){
+  const ss=info.sipsin, oh=info.sipsinOh, sc=info.strengthScore;
+  const GN={bigeop:'비겁',siksang:'식상',jaesung:'재성',gwansal:'관살',insung:'인성'};
+  const out=[];
+  // 1) 신강/신약 강도
+  if(sc<=-.5) out.push(`일간(${info.ilgan.h})의 힘은 약한데 주변 기운이 매우 강한 <b>아주 신약</b>입니다. 혼자 밀어붙이기보다 사람·환경의 도움을 업고 때를 기다리는 편이 유리합니다.`);
+  else if(sc<0) out.push(`일간이 다소 약한 <b>신약</b>입니다. 든든한 뿌리(인성)와 동료(비겁)를 곁에 둘 때 안정됩니다.`);
+  else if(sc<.5) out.push(`기운이 대체로 <b>균형</b> 잡힌 편이라, 상황에 맞춰 유연하게 쓰면 좋습니다.`);
+  else out.push(`일간의 힘이 강한 <b>신강</b>입니다. 기운을 밖으로 풀어낼(식상·재성·관살) 통로를 가질 때 빛납니다.`);
+  // 2) 과다 십신(3개 이상)
+  const EXC={
+    bigeop:'같은 기운이 넘쳐 <b>경쟁·고집·재물 분산</b>이 생기기 쉽습니다. 협업과 양보가 과제입니다.',
+    siksang:'표현·활동 기운이 넘쳐 <b>재능은 많지만 산만·과로</b>로 흐르기 쉽습니다. 한 우물을 파면 좋습니다.',
+    jaesung:'재물·현실·이성의 기운이 과해 <b>감당하기 벅찬 일·재물에 치여 몸이 고단해지는(재다신약)</b> 흐름이 되기 쉽습니다. 분수와 건강 관리가 핵심입니다.',
+    gwansal:'책임·규율·압박의 기운이 과해 <b>중압감·스트레스, 명예·관재 다툼</b>에 시달리기 쉽습니다. 완급 조절과 내려놓음이 약이 됩니다.',
+    insung:'받아들이고 기대는 기운이 과해 <b>의존·생각 과다·실행 지연</b>으로 흐르기 쉽습니다. 결단과 실천이 과제입니다.',
+  };
+  Object.keys(ss).forEach(k=>{ if(ss[k]>=3) out.push(`<b>${GN[k]}(${ON[oh[k]]}) ${ss[k]}개</b> — ${EXC[k]}`); });
+  // 3) 부재 십신(0개)
+  const LACK={
+    bigeop:'자립심·추진력(비겁)이 약해, 혼자 버티는 힘을 의식적으로 키우면 좋습니다.',
+    siksang:'표현·배출 통로(식상)가 약해, 속을 드러내고 재주를 펼치는 연습이 도움이 됩니다.',
+    jaesung:'현실·재물 기운(재성)이 약해, 실속·마무리·돈 관리를 챙기면 좋습니다.',
+    gwansal:'규율·책임(관살)이 약해, 자기 관리·꾸준함·조직 적응을 보완하면 좋습니다.',
+    insung:'뿌리·배움·수용(인성)이 약해, 기댈 곳·공부·자기 돌봄을 의식적으로 챙기면 좋습니다.',
+  };
+  Object.keys(ss).forEach(k=>{ if(ss[k]===0) out.push(`<b>${GN[k]}(${ON[oh[k]]}) 0개</b> — ${LACK[k]}`); });
+  // 4) 보완(용신) 방향
+  out.push(`보완 방향: 기운의 균형으로 보면 <b>${info.isStrong?'식상·재성·관살(기운을 풀어내는 쪽)':'인성·비겁(기운을 채워주는 쪽)'}</b>을 북돋는 사람·환경·습관이 도움이 됩니다.`);
+  return out;
+}
+
 function renderInfo(){
   const el=document.getElementById('ip'),info=analysisInfo;
   const godNames={bigeop:'비겁',siksang:'식상',jaesung:'재성',gwansal:'관살',insung:'인성'};
@@ -2238,7 +2272,7 @@ function renderInfo(){
   const bars=Object.entries(info.ohCount).map(([o,n])=>`<div class="or"><div class="ol">${ON[o]} ${o}</div><div class="ob"><div class="of" style="width:${n/8*100}%;background:${OH_COLOR[o]}"></div></div><div class="on2">${n}개</div></div>`).join('');
   const missing=Object.keys(info.ohCount).filter(o=>info.ohCount[o]===0);
   const colors={목:['청색','#3868b4'],화:['적색','#b94d4d'],토:['황색','#d7b75b'],금:['백색','#eae5dd'],수:['흑색','#252633']};
-  el.innerHTML=`<h2>풍경 속 사주</h2><p class="note">원국 표시 · 시 일 월 년 (왼쪽이 시주, 전통 만세력식)</p><div class="pillars">${cards}</div><h3>오행의 분포</h3>${bars}<p class="note">원국 8글자 기준 · 지장간과 계절 가중치 제외</p><h3>${info.ilgan.h} 일간, ${metaphor.meta.name}</h3><p>${metaphor.desc}</p><h3>타고난 성향</h3><p>${sajuNature(info)}</p><p class="note">일간·신강신약·가장 두드러진 십신으로 간략히 본 성향입니다. 재미로 참고하세요.</p><h3>나를 둘러싼 기운</h3>${Object.entries(info.sipsin).map(([k,n])=>`<div class="siprow"><span>${godNames[k]} · ${ON[info.sipsinOh[k]]}</span><b>${n}개</b></div>`).join('')}<p class="note">일간을 제외한 7글자의 오행 관계입니다. ${godNames[info.dominant]}이 가장 두드러집니다.</p><details open><summary>그림과 사주를 함께 읽기</summary><p>${metaphor.sceneText||metaphor.name}</p><p class="note">일간은 중심 자연물로, 주변 오행은 빛·물결·식물과 움직임으로 표현합니다. 장면 선택과 물상 변형은 v4 규칙을 사용합니다. 신강·신약은 간이 판정입니다.</p></details><details><summary>오방색과 비어 있는 오행</summary><p>${missing.length?missing.map(o=>ON[o]+'('+o+')').join(', ')+'이 표면 원국에 없습니다.':'다섯 오행이 모두 나타납니다.'}</p><div class="swatches">${Object.entries(colors).map(([o,c])=>`<i style="background:${c[1]}" title="${o} · ${c[0]}"></i>`).join('')}</div><p class="note">목·청 / 화·적 / 토·황 / 금·백 / 수·흑. 부족한 개수만으로 용신이나 보완색을 확정하지는 않습니다.</p></details><details><summary>대운·세운 안내</summary><p class="note">첨부 화면의 대운처럼 정밀한 흐름을 계산하려면 생년월일·시간·성별·양력/음력 정보가 필요합니다. 현재는 원국 8글자에 대한 정보만 표시합니다.</p></details>`;
+  el.innerHTML=`<h2>풍경 속 사주</h2><p class="note">원국 표시 · 시 일 월 년 (왼쪽이 시주, 전통 만세력식)</p><div class="pillars">${cards}</div><h3>오행의 분포</h3>${bars}<p class="note">원국 8글자 기준 · 지장간과 계절 가중치 제외</p><h3>${info.ilgan.h} 일간, ${metaphor.meta.name}</h3><p>${metaphor.desc}</p><h3>타고난 성향</h3><p>${sajuNature(info)}</p><p class="note">일간·신강신약·가장 두드러진 십신으로 간략히 본 성향입니다. 재미로 참고하세요.</p><h3>나를 둘러싼 기운</h3>${Object.entries(info.sipsin).map(([k,n])=>`<div class="siprow"><span>${godNames[k]} · ${ON[info.sipsinOh[k]]}</span><b>${n}개</b></div>`).join('')}<p class="note">일간을 제외한 7글자의 오행 관계입니다. ${godNames[info.dominant]}이 가장 두드러집니다.</p><h3>이 사주 풀이</h3>${sajuReading(info).map(x=>'<p class="rd">'+x+'</p>').join('')}<p class="note">원국 8글자만으로 본 간략 해석입니다 · 대운·세운은 제외 · 재미로 참고하세요.</p><details open><summary>그림과 사주를 함께 읽기</summary><p>${metaphor.sceneText||metaphor.name}</p><p class="note">일간은 중심 자연물로, 주변 오행은 빛·물결·식물과 움직임으로 표현합니다. 장면 선택과 물상 변형은 v4 규칙을 사용합니다. 신강·신약은 간이 판정입니다.</p></details><details><summary>오방색과 비어 있는 오행</summary><p>${missing.length?missing.map(o=>ON[o]+'('+o+')').join(', ')+'이 표면 원국에 없습니다.':'다섯 오행이 모두 나타납니다.'}</p><div class="swatches">${Object.entries(colors).map(([o,c])=>`<i style="background:${c[1]}" title="${o} · ${c[0]}"></i>`).join('')}</div><p class="note">목·청 / 화·적 / 토·황 / 금·백 / 수·흑. 부족한 개수만으로 용신이나 보완색을 확정하지는 않습니다.</p></details><details><summary>대운·세운 안내</summary><p class="note">첨부 화면의 대운처럼 정밀한 흐름을 계산하려면 생년월일·시간·성별·양력/음력 정보가 필요합니다. 현재는 원국 8글자에 대한 정보만 표시합니다.</p></details>`;
   el.classList.add('on');
   document.getElementById('sceneName').textContent=metaphor.name;
   document.getElementById('sceneDesc').textContent=metaphor.desc;
