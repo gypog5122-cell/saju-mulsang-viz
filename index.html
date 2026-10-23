@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四柱 隱喩 風景 · 물상 연결</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:'Noto Serif KR',serif;
+    -webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  img,canvas{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
+  #si{-webkit-user-select:text;user-select:text}
+  #wm{position:fixed;left:50%;bottom:4px;transform:translateX(-50%);z-index:300;pointer-events:none;
+    font-size:11px;color:rgba(232,213,160,.3);letter-spacing:.04em;text-align:center;max-width:94vw;line-height:1.5;font-family:'Malgun Gothic',sans-serif}
+  #inputScreen{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 60%,#1a1640,#050510);transition:all .8s}
+  #inputScreen.hide{opacity:0;transform:scale(1.08);pointer-events:none}
+  #inputScreen h1{font-size:clamp(1.8em,5vw,3em);font-weight:900;color:#e8d5a0;margin-bottom:8px;text-shadow:0 0 20px rgba(232,213,160,.2)}
+  .sub{color:#7a7090;font-size:.88em;margin-bottom:36px}
+  #si{width:min(480px,84vw);padding:17px 24px;background:rgba(255,255,255,.04);border:2px solid rgba(232,213,160,.25);border-radius:14px;color:#fdf4d7;font-size:clamp(1.3em,4vw,2em);text-align:center;letter-spacing:.18em;outline:none;backdrop-filter:blur(6px)}
+  #si:focus{border-color:#e8d5a0;box-shadow:0 0 30px rgba(232,213,160,.15)}
+  #si::placeholder{color:#444;letter-spacing:.08em;font-size:.55em}
+  #err{color:#ff6b6b;font-size:.82em;margin-top:10px;min-height:1.2em}
+  #go{margin-top:26px;padding:14px 52px;background:linear-gradient(135deg,#b18333,#e8d5a0);border:none;border-radius:40px;color:#1a1000;font-size:1.1em;font-weight:900;cursor:pointer;transition:all .3s;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+  #go:hover{transform:translateY(-3px)}
+  .ex{color:#555;font-size:.75em;margin-top:14px}
+  #vs{position:fixed;inset:0;z-index:50;opacity:0;pointer-events:none;transition:opacity 1.2s}
+  #vs.on{opacity:1;pointer-events:all}
+  #bb{position:fixed;top:16px;left:16px;z-index:200;padding:8px 18px;background:rgba(0,0,0,.5);border:1px solid rgba(232,213,160,.2);border-radius:25px;color:#bbb;font-size:.78em;cursor:pointer;opacity:0;pointer-events:none;transition:all .4s}
+  #bb.on{opacity:1;pointer-events:all}
+  #bb:hover{color:#fff}
+  #ip{position:fixed;top:16px;right:16px;z-index:200;background:rgba(5,5,16,.85);border:1px solid rgba(232,213,160,.15);border-radius:14px;padding:14px 18px;color:#ddd;font-size:.72em;line-height:1.6;opacity:0;pointer-events:none;transition:opacity .8s;backdrop-filter:blur(8px);min-width:170px}
+  #ip.on{opacity:1;pointer-events:all}
+  .it{font-size:1em;font-weight:700;margin-bottom:5px;color:#e8d5a0;border-bottom:1px solid rgba(232,213,160,.1);padding-bottom:4px}
+  .sn{font-size:1em;color:#fdf4d7;margin-bottom:4px;font-weight:700}
+  .sd{font-size:.7em;color:#8a8098;margin-bottom:8px}
+  .or{display:flex;align-items:center;gap:4px;margin:2px 0}.ol{width:18px;text-align:right;font-size:.68em;color:#999}.ob{flex:1;height:5px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden}.of{height:100%;border-radius:3px}.on2{width:12px;font-size:.65em;color:#888}
+  #sceneLabel{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:200;text-align:center;opacity:0;transition:opacity 1.5s;pointer-events:none}
+  #sceneLabel.on{opacity:1}
+  #sceneLabel .name{font-size:clamp(1.2em,3vw,2em);color:#e8d5a0;font-weight:900;text-shadow:0 2px 15px rgba(0,0,0,.6)}
+  #sceneLabel .desc{font-size:.8em;color:#8a8098;margin-top:4px}
+  #sceneLabel .quote{font-size:.72em;color:rgba(232,213,160,.45);margin-top:10px;font-style:italic;letter-spacing:.5px}
+  @media(max-width:600px){#ip{top:auto;bottom:60px;right:8px;left:8px}}
+
+  :root{--side:352px;--gold:#e8d5a0;--muted:#aaa0b9}
+  #vs{right:var(--side)}#vs canvas{display:block;touch-action:none}
+  #ip{top:0;bottom:0;right:0;width:var(--side);border:0;border-left:1px solid #e8d5a020;border-radius:0;padding:30px 24px;background:linear-gradient(155deg,#181526f5,#080913fa);overflow-y:auto;backdrop-filter:none;font-family:"Malgun Gothic",sans-serif;font-size:13px;line-height:1.65}
+  #ip h2{font-family:'Noto Serif KR',serif;color:var(--gold);font-size:23px;font-weight:400;margin-bottom:6px}
+  #ip h3{color:#dbcda9;font-size:13px;font-weight:500;margin:24px 0 12px}
+  #ip p{color:#b8aec7;margin:8px 0}#ip .note{font-size:11px;color:#9d92ad;line-height:1.8}
+  .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:20px;text-align:center}
+  .pillar{border:1px solid #ffffff12;border-radius:9px;padding:10px 2px;background:#ffffff03}.pillar.day{border-color:#dfc68e70;background:#dfc68e08}
+  .pillar span{display:block;font-size:11px;color:#b5a8c5}.pillar b{display:block;font-family:'Noto Serif KR',serif;font-size:31px;font-weight:400;line-height:1.55}
+  .pillar small{font-size:10px;color:#9b91aa;display:block;margin-top:4px}
+  .or{gap:10px;margin:12px 0}.ol{width:40px;font-size:12px;color:#c6bcd2;text-align:left}.ob{height:5px}.on2{font-size:11px;width:24px}
+  .siprow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #ffffff08;color:#bfb4cd}.siprow b{color:#e3d5bc;font-weight:400}
+  #ip details{border-top:1px solid #ffffff12;margin-top:20px;padding-top:14px}#ip summary{cursor:pointer;color:#d7c9df;font-size:12px}
+  .swatches{display:flex;gap:7px;margin:12px 0}.swatches i{width:25px;height:25px;border:1px solid #ffffff30;border-radius:50%;display:inline-block}
+  #sceneLabel{left:calc((100vw - var(--side))/2);width:calc(100vw - var(--side) - 70px);bottom:28px;max-width:760px}
+  #sceneLabel .name{font-weight:400;font-size:clamp(21px,2.4vw,32px)}#sceneLabel .desc{line-height:1.8;color:#b8aac7;font-size:12px}#sceneLabel .quote{color:#a797b3}
+  #tools{position:fixed;top:16px;right:calc(var(--side) + 16px);z-index:90;display:none;gap:8px}body.viewing #tools{display:flex}
+  #tools button,#example{border:1px solid #e8d5a030;color:#cfc2de;background:#0c0b1bcc;border-radius:24px;padding:9px 14px;font-family:inherit;font-size:12px;cursor:pointer}
+  #example{margin-top:18px;background:transparent}#inputScreen .sub{padding:0 20px;text-align:center;line-height:1.9}
+  button:focus-visible,summary:focus-visible{outline:2px solid #efdfb4;outline-offset:4px}
+  @media(max-width:960px){:root{--side:306px}#ip{padding:24px 18px}#tools{top:60px}#sceneLabel .quote{display:none}}
+  @media(max-width:650px){#vs{right:0;bottom:40dvh}#ip{top:60dvh;bottom:0;left:0;right:0;width:100%;padding:20px;border-left:0;border-top:1px solid #e8d5a030}#sceneLabel{left:50%;width:90%;bottom:calc(40dvh + 18px)}#sceneLabel .name{font-size:20px}#sceneLabel .desc,#sceneLabel .quote{display:none}#tools{right:10px;top:12px;gap:5px}#tools button{font-size:10px;padding:8px}#bb{left:10px;top:12px;font-size:10px;padding:8px}#ip h2{font-size:20px}.pillars{margin-top:12px}#inputScreen h1{font-size:27px}.sub{font-size:12px}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="inputScreen">
+  <h1>四柱 隱喩 風景</h1>
+  <p class="sub">일간의 눈으로 바라본 당신의 사주 풍경 · 포인트에 마우스를 대보세요<br>입력은 <b style="color:#e8d5a0">년 → 월 → 일 → 시</b> 순서 (쓰던 대로) · 화면은 시주가 왼쪽에 표시됩니다</p>
+  <input type="text" id="si" maxlength="32" aria-label="년주 월주 일주 시주 순서로 사주 입력" placeholder="년 월 일 시 순서 · 8글자" autocomplete="off" spellcheck="false">
+  <div id="err" role="alert"></div>
+  <button id="go">풍경 생성</button>
+  <button id="example" type="button">모닥불 예시로 둘러보기</button><p class="ex">년→월→일→시 예: 무진 을묘 정해 무신</p>
+</div>
+<div id="vs"></div>
+<button id="bb">← 다시 입력</button>
+<aside id="ip" aria-label="사주 정보" aria-live="polite"></aside>
+<div id="tools"><button id="pause">움직임 멈춤</button><button id="erase">붓선 지우기</button></div>
+<div id="sceneLabel"><div class="name" id="sceneName"></div><div class="desc" id="sceneDesc"></div><div class="quote" id="sceneQuote"></div></div>
+<div id="wm">ⓒ 사주 물상 풍경 · 서울과학기술대학교 박사과정 채영미 · badwoman@kduniv.ac.kr · 무단 복제·배포 금지</div>
+
+<script>
+// ── 복제 억제(완벽한 방지는 불가, 일반 사용자 억제용) ──
+(function(){
+  // 우클릭(컨텍스트 메뉴) 막기
+  document.addEventListener('contextmenu',e=>e.preventDefault());
+  // 이미지/요소 드래그 막기
+  document.addEventListener('dragstart',e=>e.preventDefault());
+  // 텍스트 선택 막기 (입력창 제외)
+  document.addEventListener('selectstart',e=>{if(e.target&&e.target.id==='si')return;e.preventDefault();});
+  // 소스보기/저장/개발자도구 단축키 억제
+  document.addEventListener('keydown',e=>{
+    const k=(e.key||'').toLowerCase();
+    if(e.key==='F12'){e.preventDefault();return;}
+    if((e.ctrlKey||e.metaKey)&&!e.altKey){
+      if(k==='s'||k==='u'||k==='p'){e.preventDefault();return;}            // 저장·소스·인쇄
+      if(e.shiftKey&&(k==='i'||k==='j'||k==='c')){e.preventDefault();return;} // 개발자도구
+    }
+  });
+})();
+</script>
+
+<script>
+// ============================================================
+// 데이터
+// ============================================================
+const CG=[
+  {h:'甲',k:'갑',o:'목',y:'양'},{h:'乙',k:'을',o:'목',y:'음'},
+  {h:'丙',k:'병',o:'화',y:'양'},{h:'丁',k:'정',o:'화',y:'음'},
+  {h:'戊',k:'무',o:'토',y:'양'},{h:'己',k:'기',o:'토',y:'음'},
+  {h:'庚',k:'경',o:'금',y:'양'},{h:'辛',k:'신',o:'금',y:'음'},
+  {h:'壬',k:'임',o:'수',y:'양'},{h:'癸',k:'계',o:'수',y:'음'},
+];
+const JJ=[
+  {h:'子',k:'자',o:'수',y:'양'},{h:'丑',k:'축',o:'토',y:'음'},
+  {h:'寅',k:'인',o:'목',y:'양'},{h:'卯',k:'묘',o:'목',y:'음'},
+  {h:'辰',k:'진',o:'토',y:'양'},{h:'巳',k:'사',o:'화',y:'음'},
+  {h:'午',k:'오',o:'화',y:'양'},{h:'未',k:'미',o:'토',y:'음'},
+  {h:'申',k:'신',o:'금',y:'양'},{h:'酉',k:'유',o:'금',y:'음'},
+  {h:'戌',k:'술',o:'토',y:'양'},{h:'亥',k:'해',o:'수',y:'음'},
+];
+const CM={},JM={};
+CG.forEach((c,i)=>{CM[c.h]=i;CM[c.k]=i});
+JJ.forEach((j,i)=>{JM[j.h]=i;JM[j.k]=i});
+const ON={'목':'木','화':'火','토':'土','금':'金','수':'水'};
+const OH={'목':145,'화':10,'토':45,'금':210,'수':225};
+
+// 오행 상생상극
+const GENERATE={'목':'화','화':'토','토':'금','금':'수','수':'목'}; // 내가 생하는
+const CONTROL={'목':'토','화':'금','토':'수','금':'목','수':'화'};  // 내가 극하는
+const CTRL_BY={'목':'금','화':'수','토':'목','금':'화','수':'토'}; // 나를 극하는
+const GEN_BY={'목':'수','화':'목','토':'화','금':'토','수':'금'};  // 나를 생하는
+
+// 일간별 은유적 정체성
+const ILGAN_META={
+  '甲':{name:'큰 나무',visual:'greatTree',baseHue:140},
+  '乙':{name:'꽃과 덩굴',visual:'flower',baseHue:150},
+  '丙':{name:'태양',visual:'sun',baseHue:15},
+  '丁':{name:'촛불',visual:'candle',baseHue:25},
+  '戊':{name:'큰 산',visual:'mountain',baseHue:35},
+  '己':{name:'정원',visual:'garden',baseHue:45},
+  '庚':{name:'바위/칼날',visual:'blade',baseHue:200},
+  '辛':{name:'보석/이슬',visual:'jewel',baseHue:215},
+  '壬':{name:'대해',visual:'ocean',baseHue:220},
+  '癸':{name:'안개/이슬비',visual:'mist',baseHue:230},
+};
+
+function parse(s){
+  s=s.replace(/[\s,·]/g,'');if(s.length!==8)return null;
+  const r=[];
+  for(let i=0;i<8;i+=2){
+    if(!(s[i]in CM)||!(s[i+1]in JM))return null;
+    r.push({cg:CG[CM[s[i]]],jj:JJ[JM[s[i+1]]]});
+  }
+  return r;
+}
+
+// ============================================================
+// 십신 분석 + 간이 신강/신약
+// ============================================================
+function deepAnalyze(pillars){
+  const ilgan=pillars[2].cg; // 일주 천간 = 나
+  const myOh=ilgan.o;
+
+  // 나머지 7글자의 오행 수집
+  const others=[];
+  pillars.forEach((pl,i)=>{
+    if(i===2) others.push(pl.jj.o); // 일주는 지지만
+    else { others.push(pl.cg.o); others.push(pl.jj.o); }
+  });
+
+  // 십신 분류
+  const sipsin={bigeop:0,siksang:0,jaesung:0,gwansal:0,insung:0};
+  const sipsinOh={
+    bigeop:myOh,                    // 비겁: 같은 오행
+    siksang:GENERATE[myOh],         // 식상: 내가 생하는
+    jaesung:CONTROL[myOh],          // 재성: 내가 극하는
+    gwansal:CTRL_BY[myOh],          // 관살: 나를 극하는
+    insung:GEN_BY[myOh],            // 인성: 나를 생하는
+  };
+
+  others.forEach(oh=>{
+    if(oh===sipsinOh.bigeop) sipsin.bigeop++;
+    else if(oh===sipsinOh.siksang) sipsin.siksang++;
+    else if(oh===sipsinOh.jaesung) sipsin.jaesung++;
+    else if(oh===sipsinOh.gwansal) sipsin.gwansal++;
+    else if(oh===sipsinOh.insung) sipsin.insung++;
+  });
+
+  // 간이 신강/신약: 비겁+인성 vs 식상+재성+관살
+  const strong=sipsin.bigeop+sipsin.insung;
+  const weak=sipsin.siksang+sipsin.jaesung+sipsin.gwansal;
+  // 월지 득령 보정
+  const wolji=pillars[1].jj.o;
+  const wolBonus=(wolji===myOh||wolji===GEN_BY[myOh])?1:-1;
+  const isStrong=(strong+wolBonus)>weak;
+  const strengthScore=(strong+wolBonus-weak)/7; // -1~+1
+
+  // 지배 십신 (가장 많은)
+  const sorted=Object.entries(sipsin).sort((a,b)=>b[1]-a[1]);
+  const dominant=sorted[0][0];
+  const secondary=sorted[1][1]>0?sorted[1][0]:null;
+
+  // 오행별 총 카운트
+  const ohCount={'목':0,'화':0,'토':0,'금':0,'수':0};
+  pillars.forEach(pl=>{ohCount[pl.cg.o]++;ohCount[pl.jj.o]++});
+
+  return{ilgan,myOh,sipsin,sipsinOh,isStrong,strengthScore,dominant,secondary,ohCount};
+}
+
+// ============================================================
+// 은유 장면 선택
+// ============================================================
+function selectLegacyMetaphor(info){
+  const m=ILGAN_META[info.ilgan.h];
+  const d=info.dominant, s=info.secondary;
+  const strong=info.isStrong;
+
+  // 은유 조합: 일간 정체성 + 지배 십신 + 신강/신약
+  let name='',desc='',sceneType='',quote='';
+
+  // === 관살(나를 극하는 것) 지배 ===
+  if(d==='gwansal'){
+    if(!strong){
+      const threats={'목':'도끼','화':'폭풍우','토':'뿌리 뽑는 바람','금':'용광로','수':'가뭄'};
+      name=`${threats[info.sipsinOh.gwansal]} 속 ${m.name}`;
+      desc=`거센 ${ON[info.sipsinOh.gwansal]}의 기운이 ${m.name}을(를) 휘감습니다`;
+      sceneType='threat_weak';
+      quote='바람이 거셀수록 뿌리는 깊어진다';
+    } else {
+      name=`시련을 넘기는 ${m.name}`;
+      desc=`강한 의지로 ${ON[info.sipsinOh.gwansal]}의 압박을 버텨냅니다`;
+      sceneType='threat_strong';
+      quote='시련은 나를 깎아 빛나게 하는 숫돌이다';
+    }
+  }
+  // === 비겁(동료) 지배 ===
+  else if(d==='bigeop'){
+    if(strong){
+      name=`수많은 ${m.name}의 세계`;
+      desc=`같은 기운이 가득 차 넘칩니다`;
+      sceneType='crowd_strong';
+      quote='넘치는 기운은 스스로를 다스릴 때 비로소 빛난다';
+    } else {
+      name=`동료를 찾는 ${m.name}`;
+      desc=`비슷한 존재들 사이에서 자리를 잡아갑니다`;
+      sceneType='crowd_weak';
+      quote='같은 빛끼리 모여야 어둠을 밝힌다';
+    }
+  }
+  // === 식상(표현/생산) 지배 ===
+  else if(d==='siksang'){
+    if(strong){
+      name=`피어나는 ${m.name}`;
+      desc=`넘치는 기운이 ${ON[info.sipsinOh.siksang]}으로 흘러나갑니다`;
+      sceneType='express_strong';
+      quote='꽃은 피어남으로써 존재를 증명한다';
+    } else {
+      name=`기운을 쏟아내는 ${m.name}`;
+      desc=`남은 힘을 다해 ${ON[info.sipsinOh.siksang]}을(를) 만들어냅니다`;
+      sceneType='express_weak';
+      quote='마지막 한 방울의 빛도 누군가의 길이 된다';
+    }
+  }
+  // === 재성(내가 지배하는 것) 지배 ===
+  else if(d==='jaesung'){
+    if(strong){
+      name=`${m.name} 아래 펼쳐진 세상`;
+      desc=`${ON[info.sipsinOh.jaesung]}의 세계를 지배합니다`;
+      sceneType='dominate_strong';
+      quote='천하를 얻되 자신을 잃지 않는 것이 참된 힘이다';
+    } else {
+      name=`감당 못할 재물 속 ${m.name}`;
+      desc=`너무 많은 ${ON[info.sipsinOh.jaesung]}에 파묻힙니다`;
+      sceneType='dominate_weak';
+      quote='가진 것이 많을수록 가벼워져야 한다';
+    }
+  }
+  // === 인성(나를 키우는 것) 지배 ===
+  else if(d==='insung'){
+    if(strong){
+      name=`보호받는 ${m.name}`;
+      desc=`${ON[info.sipsinOh.insung]}의 자양분이 넘칩니다`;
+      sceneType='nurture_strong';
+      quote='은혜를 알되 기대지 않을 때 스스로 선다';
+    } else {
+      name=`어머니 품의 ${m.name}`;
+      desc=`${ON[info.sipsinOh.insung]}이(가) 약한 ${m.name}을(를) 감싸줍니다`;
+      sceneType='nurture_weak';
+      quote='어둠 속에서도 나를 비추는 빛은 있다';
+    }
+  }
+
+  // 보조 십신으로 부제 보강
+  if(s&&s!==d&&info.sipsin[s]>0){
+    const subNames={bigeop:'동료의 기운',siksang:'표현의 기운',jaesung:'재물의 기운',gwansal:'시련의 기운',insung:'보호의 기운'};
+    desc+=`, ${subNames[s]}도 함께합니다`;
+  }
+
+  // ─── 문장에서 시각 키워드 추출 ───
+  // 생성된 name/desc/quote를 스캔해 그림 오버레이를 결정한다.
+  const txt = name+' '+desc+' '+(quote||'');
+  const story = {
+    storm:   /폭풍우|폭풍/.test(txt),
+    rain:    /폭풍우|빗|비[^^]/.test(txt) || /비 /.test(txt+' '),
+    lightning: /번개|뇌/.test(txt),
+    darkClouds: /폭풍우|먹구름|구름/.test(txt),
+    drought: /가뭄|갈증|사막/.test(txt),
+    fire:    /용광로|불길|업화|불바다|화염/.test(txt),
+    wind:    /바람|뿌리 뽑|휘감|휩쓸/.test(txt),
+    axe:     /도끼|칼|베/.test(txt),
+    flood:   /홍수|범람|넘쳐|파묻/.test(txt),
+    bloom:   /피어나|만개|피어|꽃|쏟아내/.test(txt),
+    crowd:   /수많은|가득|넘치|동료/.test(txt),
+    nurture: /감싸|품|어머니|보호|자양/.test(txt),
+    hero:    /시련|넘기|굳건|꺾이지|극복/.test(txt),
+    dominate: /지배|펼쳐진|세상/.test(txt),
+  };
+  return{name,desc,sceneType,meta:m,info,quote,story};
+}
+
+// ============================================================
+// 색상 유틸
+// ============================================================
+
+function sceneFromV4(input){
+const CG_OH={甲:'목',乙:'목',丙:'화',丁:'화',戊:'토',己:'토',庚:'금',辛:'금',壬:'수',癸:'수'};
+const JJ_OH={子:'수',丑:'토',寅:'목',卯:'목',辰:'토',巳:'화',午:'화',未:'토',申:'금',酉:'금',戌:'토',亥:'수'};
+const CG_KR2CH={갑:'甲',을:'乙',병:'丙',정:'丁',무:'戊',기:'己',경:'庚',신:'辛',임:'壬',계:'癸'};
+const JJ_KR2CH={자:'子',축:'丑',인:'寅',묘:'卯',진:'辰',사:'巳',오:'午',미:'未',신:'申',유:'酉',술:'戌',해:'亥'};
+const GEN={목:'화',화:'토',토:'금',금:'수',수:'목'},CTRL={목:'토',화:'금',토:'수',금:'목',수:'화'},CBY={목:'금',화:'수',토:'목',금:'화',수:'토'},GBY={목:'수',화:'목',토:'화',금:'토',수:'금'};
+const ON={목:'木',화:'火',토:'土',금:'金',수:'水'};
+const OH_HEX={목:'#3fae5a',화:'#e5533c',토:'#d99a3a',금:'#cfd6dd',수:'#3f7fd9'};
+const OH_LIST=['목','화','토','금','수'];
+const SEASON={子:'겨울',丑:'겨울',寅:'봄',卯:'봄',辰:'봄',巳:'여름',午:'여름',未:'여름',申:'가을',酉:'가을',戌:'가을',亥:'겨울'};
+const TIME={子:'깊은 밤',亥:'깊은 밤',丑:'새벽',寅:'새벽',卯:'동틀녘',辰:'아침',巳:'오전',午:'한낮',未:'이른 오후',申:'오후',酉:'해질녘',戌:'땅거미'};
+const ILGAN_T={甲:'곧고 진취적',乙:'유연·생활력',丙:'밝고 정열적',丁:'섬세·헌신적',戊:'중후·포용',己:'자상·실속',庚:'강직·결단',辛:'예민·완벽주의',壬:'지혜·포용',癸:'총명·감성적'};
+
+/* ═══════════════════════════════════════════════════════════
+   ② 규칙 데이터표 ★ — 여기만 채우면 그림이 늘어난다
+   ═══════════════════════════════════════════════════════════ */
+
+// (가) 일간 물상 변형표: 일간 → 기본 자연물 + 조건부 변형
+//   cond(a): 분석결과 a 를 받아 true면 그 변형으로. 위에서부터 먼저 맞는 것 1개.
+const ILGAN_FORMS={
+  甲:{base:'tree',name:'큰 나무',transforms:[
+    {cond:a=>a.dom==='재성'&&!a.isStrong, form:'buriedTree', name:'흙에 묻힌 나무'},
+  ]},
+  乙:{base:'flower',name:'꽃과 덩굴',transforms:[]},
+  丙:{base:'sun',name:'태양',transforms:[]},
+  丁:{base:'candle',name:'촛불',transforms:[
+    {cond:a=>a.sip.인성>=2, form:'bonfire', name:'모닥불'},
+  ]},
+  戊:{base:'mountain',name:'큰 산',transforms:[]},
+  己:{base:'garden',name:'정원',transforms:[]},
+  庚:{base:'blade',name:'바위·칼날',transforms:[]},
+  辛:{base:'jewel',name:'보석·이슬',transforms:[]},
+  壬:{base:'ocean',name:'대해',transforms:[]},
+  癸:{base:'mist',name:'안개·이슬비',transforms:[]},
+};
+
+// (나) 오행 표현표: 같은 오행도 '용신(도움)'이냐 '기신(해)'이냐로 전혀 다른 그림
+//   fg = 기신일 때 덮치는/짓누르는 전경 그림 키 / sup = 용신일 때 돕는 그림 키
+const ELEMENT_EXPR={
+  수:{용신:{expr:'단비·샘물',sup:'spring'},   기신:{expr:'거센 물살·홍수',fg:'flood'}},
+  목:{용신:{expr:'땔감·새순',sup:'sprout'},   기신:{expr:'가시덤불',fg:'thorn'}},
+  화:{용신:{expr:'온기·등불',sup:'warmth'},   기신:{expr:'들불·가뭄',fg:'wildfire'}},
+  토:{용신:{expr:'기름진 땅',sup:'soil'},     기신:{expr:'흙더미·매몰',fg:'mound'}},
+  금:{용신:{expr:'벼린 연장·보석',sup:'gem'}, 기신:{expr:'서릿발·칼날',fg:'frost'}},
+};
+
+/* ═══════════════════════════════════════════════════════════
+   ③ 분석 — 8글자 → 사주 상태 (결정론)
+   ═══════════════════════════════════════════════════════════ */
+function analyze(input){
+  const s=input.replace(/[\s,·.]/g,'');
+  if(s.length!==8)return null;
+  const P=[];
+  for(let i=0;i<8;i+=2){
+    const cg=(s[i] in CG_OH)?s[i]:CG_KR2CH[s[i]];
+    const jj=(s[i+1] in JJ_OH)?s[i+1]:JJ_KR2CH[s[i+1]];
+    if(!(cg in CG_OH)||!(jj in JJ_OH))return null;
+    P.push([cg,jj]);
+  }
+  const ilgan=P[2][0], my=CG_OH[ilgan];
+  const sip={비겁:0,식상:0,재성:0,관살:0,인성:0};
+  const map={[my]:'비겁',[GEN[my]]:'식상',[CTRL[my]]:'재성',[CBY[my]]:'관살',[GBY[my]]:'인성'};
+  P.forEach((p,i)=>{(i===2?[JJ_OH[p[1]]]:[CG_OH[p[0]],JJ_OH[p[1]]]).forEach(o=>sip[map[o]]++);});
+  const wolji=JJ_OH[P[1][1]];
+  const strong=sip.비겁+sip.인성+((wolji===my||wolji===GBY[my])?1:-1), weak=sip.식상+sip.재성+sip.관살;
+  const isStrong=strong>weak;
+  const strengthScore=Math.max(-1,Math.min(1,(strong-weak)/7));
+  const ohc={목:0,화:0,토:0,금:0,수:0}; P.forEach(p=>{ohc[CG_OH[p[0]]]++;ohc[JJ_OH[p[1]]]++;});
+  const dom=Object.entries(sip).sort((a,b)=>b[1]-a[1])[0][0];
+  return {P,ilgan,my,sip,isStrong,strengthScore,ohc,dom,map,season:SEASON[P[1][1]],time:TIME[P[3][1]],woljiJJ:P[1][1],siJJ:P[3][1]};
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ④ 장면 명세 빌드 — 사주 상태 → scene spec
+   ═══════════════════════════════════════════════════════════ */
+function resolveForm(a){const f=ILGAN_FORMS[a.ilgan];for(const t of f.transforms)if(t.cond(a))return{form:t.form,name:t.name,transformed:true};return{form:f.base,name:f.name,transformed:false};}
+
+function buildSpec(a){
+  const yongSip=a.isStrong?['식상','재성','관살']:['인성','비겁'];
+  const roleSip=oh=>a.map[oh];
+  // 각 오행을 '요소'로 — 역할(십신) + 용/기신 + 강도
+  const elements=OH_LIST.filter(oh=>a.ohc[oh]>0).map(oh=>({oh,sip:roleSip(oh),yong:yongSip.includes(roleSip(oh)),strength:a.ohc[oh]}));
+  const giEls=elements.filter(e=>!e.yong && e.oh!==a.my).sort((x,y)=>y.strength-x.strength);
+  const yongEls=elements.filter(e=>e.yong && e.oh!==a.my).sort((x,y)=>y.strength-x.strength);
+  const domGi=giEls[0]||null;
+  const subject=resolveForm(a);
+  // 상태 판정
+  let state='calm';
+  if(subject.form==='buriedTree') state='crushed';
+  else if(subject.form==='bonfire') state='thrive';
+  else if(!a.isStrong && domGi && domGi.strength>=3) state='threatened';
+  else if(a.isStrong && yongEls.length>0 && yongEls[0].strength>=2) state='thrive';
+  const scale=1+a.strengthScore*0.25; // 신강 크게, 신약 작게
+  // 무대
+  const cold=a.ohc.수+a.ohc.금>a.ohc.화+a.ohc.목;
+  const night=/밤|새벽|땅거미|해질녘/.test(a.time);
+  const stormy=(domGi&&(domGi.oh==='수'||domGi.oh==='화')&&domGi.strength>=3&&state==='threatened');
+  return {a,subject,state,scale,elements,giEls,yongEls,domGi,stage:{season:a.season,time:a.time,cold,night,stormy},palette:palette(a,{cold,night,stormy})};
+}
+
+function palette(a,st){
+  let top,bot,horizon;
+  if(st.stormy){top='#0b1220';bot='#26313f';horizon='#3a4656';}
+  else if(st.night){top='#0a0e1e';bot='#1c2340';horizon='#33406a';}
+  else if(a.time==='동틀녘'||a.time==='해질녘'){top='#241a44';bot='#c76a3e';horizon='#e0925a';}
+  else{top=st.cold?'#2b4e72':'#2f6fb8';bot=st.cold?'#8fb0c8':'#bfe0f5';horizon=st.cold?'#a9c4d6':'#dceff8';}
+  if(a.season==='겨울'&&!st.stormy)bot='#a9bccb';
+  if(a.season==='가을'&&!st.stormy)bot='#d9b98a';
+  return {top,bot,horizon,glow:OH_HEX[a.my],stormy:st.stormy,night:st.night};
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ⑤ 그림 부품 — 주체(자연물)
+   ═══════════════════════════════════════════════════════════ */
+
+function caption(spec){
+  const {a,subject,state,domGi,yongEls}=spec;
+  const f=subject.name;
+  let name,desc,quote;
+  if(subject.form==='bonfire'){name='장작을 만나 타오르는 모닥불';desc='木(목)의 장작이 불씨를 키워 크게 타오릅니다';quote='땔감을 만난 불은 세상을 밝힌다';}
+  else if(subject.form==='buriedTree'){name='감당 못할 재물에 짓눌린 나무';desc=`재성(${ON[CTRL[a.my]]})이 축복이 아니라 짐이 되어 짓누릅니다 — 재다신약`;quote='감당 못할 재물은 축복이 아니라 짐이다';}
+  else if(state==='threatened'&&domGi){const t=ELEMENT_EXPR[domGi.oh].기신.expr.split('·')[0];name=`${t} 속 ${f}`;desc=`감당 못할 ${ON[domGi.oh]}(${domGi.sip})이 ${f}을(를) 위협합니다 — 신약`;quote='바람이 거셀수록 뿌리는 깊어진다';}
+  else if(state==='thrive'){name=`번영하는 ${f}`;desc=yongEls[0]?`${ON[yongEls[0].oh]}(${yongEls[0].sip})의 기운을 잘 다스립니다 — 신강`:'기운이 조화롭습니다 — 신강';quote='다스릴 수 있는 힘만이 참된 풍요다';}
+  else{name=`고요한 ${f}`;desc='기운이 대체로 평탄합니다';quote='고요함 속에 길이 있다';}
+  return {name,desc:desc+` · ${a.season} ${a.time} · 일간 ${a.ilgan}(${f}) · ${a.isStrong?'신강':'신약'} · ${ILGAN_T[a.ilgan]}`,quote,
+    scene:sceneText(spec)};
+}
+function sceneText(spec){
+  const {a,subject,state,domGi}=spec;
+  const seasonP={봄:'새순 돋는 봄',여름:'한여름',가을:'서리 내린 가을',겨울:'한겨울'}[a.season];
+  const around=subject.form==='bonfire'?'차가운 어둠을 밝히며':subject.form==='buriedTree'?'감당 못할 재물 더미에 짓눌려':
+    state==='threatened'&&domGi?`밀려드는 ${ELEMENT_EXPR[domGi.oh].기신.expr.split('·')[0]} 속에서`:
+    state==='thrive'?'넉넉한 기운 가운데':'고요한 대지 위로';
+  const subj={tree:'한 그루 큰 나무가',buriedTree:'작은 나무가',flower:'여린 꽃과 덩굴이',sun:'붉은 해가',candle:'작은 촛불 하나가',bonfire:'장작 위 모닥불이',mountain:'묵직한 산이',garden:'너른 정원이',blade:'서슬 퍼런 칼날이',jewel:'맑은 보석이',ocean:'드넓은 바다가',mist:'뿌연 안개가'}[subject.form];
+  const verb=state==='thrive'?'흔들림 없이 자리를 지킨다':state==='crushed'?'파묻혀 신음하면서도 숨을 잇는다':state==='threatened'?'가녀리게 흔들리지만 끝내 꺾이지 않는다':'묵묵히 제자리를 지킨다';
+  return `${seasonP} ${a.time}, ${around} ${subj} ${verb}.`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ⑨ 렌더 + UI
+   ═══════════════════════════════════════════════════════════ */
+
+  const a=analyze(input);if(!a)return null;
+  const spec=buildSpec(a);return {...spec,words:caption(spec)};
+}
+function selectMetaphor(info){
+  const prior=selectLegacyMetaphor(info);
+  const spec=sceneFromV4(sajuData.map(p=>p.cg.h+p.jj.h).join(''));
+  const w=spec.words,form=spec.subject.form;
+  const meta={...prior.meta,name:spec.subject.name,visual:form==='bonfire'?'bonfire':prior.meta.visual};
+  const threat=spec.state==='threatened',waterThreat=threat&&spec.domGi?.oh==='수';
+  return {...prior,meta,spec,name:w.name,desc:w.desc,quote:w.quote,sceneText:w.scene,
+    story:{storm:spec.stage.stormy,rain:spec.stage.stormy&&waterThreat,lightning:false,
+      darkClouds:spec.stage.stormy,drought:false,fire:threat&&spec.domGi?.oh==='화',
+      wind:spec.stage.stormy,axe:threat&&spec.domGi?.oh==='금',flood:waterThreat,
+      bloom:form==='flower'&&spec.state==='thrive',crowd:false,
+      nurture:spec.yongEls.some(e=>e.sip==='인성')&&form!=='bonfire',hero:false,dominate:false}};
+}
+
+function col(r,g,b,sat,bri){
+  bri=bri||1;const gr=r*.299+g*.587+b*.114;
+  return[(gr+(r-gr)*sat)*bri,(gr+(g-gr)*sat)*bri,(gr+(b-gr)*sat)*bri];
+}
+function oSat(n){return n===0?0:Math.pow(n/7,.5)}
+function oBri(n){return n===0?.2:.45+n/7*.55}
+function hslToRgb(h,s,l){h/=360;s/=100;l/=100;let r,g,b;if(s===0){r=g=b=l}else{const f=(p2,q,t2)=>{if(t2<0)t2+=1;if(t2>1)t2-=1;if(t2<1/6)return p2+(q-p2)*6*t2;if(t2<1/2)return q;if(t2<2/3)return p2+(q-p2)*(2/3-t2)*6;return p2};const q=l<.5?l*(1+s):l+s-l*s;const p2=2*l-q;r=f(p2,q,h+1/3);g=f(p2,q,h);b=f(p2,q,h-1/3)}return[Math.round(r*255),Math.round(g*255),Math.round(b*255)]}
+
+// ============================================================
+// 전역 상태
+// ============================================================
+let sajuData,analysisInfo,metaphor,p5i,introAnim=0;
+let motionPaused=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const OH_COLOR={목:'#64ba8a',화:'#f08066',토:'#d5b56e',금:'#d1d9e5',수:'#779ce0'};
+
+// ============================================================
+// p5.js 시각화
+// ============================================================
+function startViz(){
+  if(p5i)p5i.remove();
+  const info=analysisInfo;
+  const ss=info.sipsin;
+
+  // 각 십신별 채도/명도 (오행 개수 기반)
+  const E={};
+  for(const k of['목','화','토','금','수']){
+    E[k]={sat:oSat(info.ohCount[k]),bri:oBri(info.ohCount[k]),n:info.ohCount[k]};
+  }
+  // 일간 오행
+  const myE=E[info.myOh];
+  // 관살 오행
+  const gwanOh=info.sipsinOh.gwansal;
+  const gwanE=E[gwanOh];
+  // 비겁 오행
+  const biE=E[info.sipsinOh.bigeop];
+  // 식상 오행
+  const sikOh=info.sipsinOh.siksang;
+  const sikE=E[sikOh];
+  // 재성 오행
+  const jaeOh=info.sipsinOh.jaesung;
+  const jaeE=E[jaeOh];
+  // 인성 오행
+  const inOh=info.sipsinOh.insung;
+  const inE=E[inOh];
+
+  const meta=metaphor.meta;
+  const sType=metaphor.sceneType;
+  const isStrong=info.isStrong;
+  const str=info.strengthScore; // -1~+1
+
+  p5i=new p5(p=>{
+    let W,H,t=0;
+    let tc={x:0,y:0,on:false};
+    let bursts=[];
+    let particles=[];
+    // ── 마우스 감도: 신약일수록 예민(크게 반응), 신강일수록 둔감(거의 요동 없음) ──
+    const touchSense=Math.max(.5,Math.min(2.5,1.4-str*.95)); // str -1(신약)→2.35, +1(신강)→0.5
+    const volatileSubj=!isStrong;  // 신약 주체는 건드리면 폭발적으로 타오름
+    let touchHeat=0,lastBoom=-999; // 호버 열 축적 → 폭발 트리거
+    // 캘리그래피 선 시스템 (한글우주진화.html 50% 축소)
+    let calliStrokes=[];
+    let calliActive=null;
+    let calliHueCursor=0;
+    function calliNextHue(){
+      const hues=[0,36,72,108,144,180,216,252,288,324];
+      const h=hues[calliHueCursor%10]+Math.random()*28;
+      calliHueCursor++;
+      // 일간 오행 hue를 기본으로 블렌딩
+      return (h*.5+meta.baseHue*.5)%360;
+    }
+    function calliNewStroke(hue){
+      return {pts:[],hue,sparkParts:[],rings:[],born:t,
+        cfg:{lineW:.75+Math.random()*1.2, glowM:.4+Math.random()*.7, speedM:.3+Math.random()*.6,
+          waveA:3+Math.random()*12, partSz:.4+Math.random()*1, sparkly:Math.random()>.7}};
+    }
+    function calliPush(s,x,y){
+      const last=s.pts[s.pts.length-1];
+      if(last&&Math.hypot(x-last.x,y-last.y)<5)return;
+      s.pts.push({x,y});if(s.pts.length>480)s.pts.splice(1,1);
+      if(s.pts.length===2) calliInitParts(s);
+    }
+    function calliInitParts(s){
+      const n=s.cfg.sparkly?60:40;
+      s.sparkParts=Array.from({length:n},(_,i)=>({
+        t:(i/n)*Math.max(s.pts.length-1,1),spd:(.04+Math.random()*.1)*s.cfg.speedM,
+        phase:Math.random()*Math.PI*2,amp:s.cfg.waveA*(.5+Math.random()),
+        freq:1.5+Math.random()*4,sz:s.cfg.partSz*(.5+Math.random()),
+        hShift:(Math.random()-.5)*30,dir:Math.random()<.2?-1:1}));
+    }
+    function calliPos(s,tt){
+      const pts=s.pts,len=pts.length;
+      if(!len)return{x:0,y:0};if(len===1)return pts[0];
+      const i=Math.max(0,Math.min(Math.floor(tt),len-2));
+      const f=tt-Math.floor(tt);
+      return{x:pts[i].x+(pts[i+1].x-pts[i].x)*f,y:pts[i].y+(pts[i+1].y-pts[i].y)*f};
+    }
+    function calliNorm(s,tt){
+      const pts=s.pts;if(pts.length<2)return{nx:0,ny:1};
+      const i=Math.max(0,Math.min(Math.floor(tt),pts.length-2));
+      const dx=pts[i+1].x-pts[i].x,dy=pts[i+1].y-pts[i].y,d=Math.hypot(dx,dy)||1;
+      return{nx:-dy/d,ny:dx/d};
+    }
+
+    p.setup=function(){
+      W=document.getElementById('vs').clientWidth;H=document.getElementById('vs').clientHeight;
+      p.pixelDensity(Math.min(window.devicePixelRatio||1,1.5));
+      p.createCanvas(W,H).parent('vs');p.frameRate(30);
+      initParts();
+    };
+    p.windowResized=function(){W=document.getElementById('vs').clientWidth;H=document.getElementById('vs').clientHeight;p.resizeCanvas(W,H)};
+
+    function initParts(){
+      particles=[];
+      for(let i=0;i<250;i++){
+        particles.push({x:p.random(W),y:p.random(H),vx:p.random(-.4,.4),vy:p.random(-.4,.4),
+          size:p.random(1,3.5),life:p.random(.3,1),drift:p.random(p.TWO_PI),ds:p.random(.005,.02)});
+      }
+    }
+
+    // ── 공통 헬퍼 ──
+    function skyG(t1,t2,t3,b1,b2,b3,sat,bri,ratio){
+      const a=p.constrain(introAnim*1.5,0,1);p.noStroke();
+      const top=col(t1,t2,t3,sat,bri),bot=col(b1,b2,b3,sat,bri);
+      const ctx=p.drawingContext,gr=ctx.createLinearGradient(0,0,0,H*ratio);
+      gr.addColorStop(0,`rgb(${top.map(v=>v*a).join(',')})`);gr.addColorStop(1,`rgb(${bot.map(v=>v*a).join(',')})`);
+      ctx.save();ctx.fillStyle=gr;ctx.fillRect(0,0,W,H*ratio);ctx.restore();
+    }
+    function glow(x,y,sz,r,g,b,sat,bri,int){
+      const a=p.constrain(introAnim*2-.3,0,1);
+      p.blendMode(p.ADD);p.noStroke();
+      for(let rad=sz*int;rad>sz*.3;rad-=3){
+        const c=col(r,g,b,sat,bri);
+        p.fill(c[0],c[1],c[2],p.map(rad,sz*int,sz*.3,0,3+sat*12)*a);
+        p.ellipse(x,y,rad*2);
+      }
+      p.blendMode(p.BLEND);
+    }
+    function circ(x,y,sz,r,g,b,sat,bri){
+      const a=p.constrain(introAnim*2-.3,0,1);
+      const c=col(r,g,b,sat,bri);p.noStroke();p.fill(c[0],c[1],c[2],240*a);p.ellipse(x,y,sz);
+    }
+    function mt(cx,by,w,h,r,g,b,sat,bri){
+      const a=p.constrain(introAnim*2-.4,0,1);const c=col(r,g,b,sat,bri);
+      p.noStroke();p.fill(c[0],c[1],c[2],230*a);
+      p.beginShape();p.vertex(cx-w*.55,by);
+      p.bezierVertex(cx-w*.4,by-h*.4,cx-w*.12,by-h*.95,cx,by-h);
+      p.bezierVertex(cx+w*.12,by-h*.95,cx+w*.4,by-h*.4,cx+w*.55,by);
+      p.endShape(p.CLOSE);
+    }
+    function water(ty,r,g,b,sat,bri){
+      const a=p.constrain(introAnim*2-.5,0,1);p.noStroke();
+      for(let y=ty;y<H;y++){const r2=(y-ty)/(H-ty);const c=col(p.lerp(r,r*.4,r2),p.lerp(g,g*.5,r2),p.lerp(b,b*.6,r2),sat,bri);p.stroke(c[0],c[1],c[2],240*a);p.line(0,y,W,y)}
+    }
+    function wavesF(ty,r,g,b,sat,bri,amp,n){
+      const a=p.constrain(introAnim*2-.5,0,1);p.noFill();
+      for(let w=0;w<n;w++){const wy=ty+w*(H-ty)/(n+1)+10;const c=col(r,g,b,sat,bri);
+        p.stroke(c[0],c[1],c[2],(40+sat*60)*a);p.strokeWeight(1+sat);p.beginShape();
+        for(let x=0;x<=W;x+=5)p.vertex(x,wy+Math.sin(x*.01+t*(1+sat)+w*.8)*amp);p.endShape()}
+    }
+    function stars2(n,sat,bri){
+      const a=p.constrain(introAnim*1.2,0,1);p.noStroke();p.randomSeed(42);
+      for(let i=0;i<n;i++){const sx=p.random(W),sy=p.random(H*.5);const tw=Math.sin(t*1.5+i*1.3)*.5+.5;
+        const sz=p.random(.8,2.5);const br=p.random(.3,1);const c=col(220,230,255,sat,bri);
+        p.fill(c[0],c[1],c[2],tw*br*65*a);p.circle(sx,sy,sz);
+        if(sz>1.8&&br>.7){p.fill(c[0],c[1],c[2],tw*br*20*a);p.ellipse(sx,sy,sz*5,sz);p.ellipse(sx,sy,sz,sz*5)}}
+      p.randomSeed(Date.now());
+    }
+    function tree2(x,by,h,tSat,tBri,lSat,lBri,thick){
+      const a=p.constrain(introAnim*2-.4,0,1);
+      const tc2=col(190,50,30,tSat,tBri);
+      p.stroke(tc2[0],tc2[1],tc2[2],240*a);p.strokeWeight(thick||W*.012);p.noFill();
+      p.line(x,by,x,by-h);
+      for(let i=0;i<4;i++){const bry=by-h*(.3+i*.17);const dir=(i%2?1:-1);
+        p.strokeWeight((thick||W*.012)*.5);p.line(x,bry,x+dir*W*.04,bry-h*.08)}
+      p.noStroke();const lc=col(25,120,50,lSat,lBri);
+      for(let i=0;i<5;i++){const ly=by-h*(.25+i*.14);const lx=x+(i%2?1:-1)*W*.02;
+        p.fill(lc[0]*.6,lc[1]*.6,lc[2]*.6,210*a);p.ellipse(lx,ly,W*.045,W*.028);
+        p.fill(lc[0],lc[1],lc[2],190*a);p.ellipse(lx,ly-3,W*.035,W*.02)}
+    }
+    function drawParts(hue,sat,bri){
+      const a=p.constrain(introAnim*2-1,0,1);if(a<=0)return;
+      p.blendMode(p.ADD);p.noStroke();const rgb=hslToRgb(hue,70,50);
+      particles.forEach(pt=>{pt.drift+=pt.ds;pt.x+=pt.vx+Math.sin(pt.drift)*.3;pt.y+=pt.vy+Math.cos(pt.drift*.7)*.2;
+        if(pt.x<-20)pt.x=W+20;if(pt.x>W+20)pt.x=-20;if(pt.y<-20)pt.y=H+20;if(pt.y>H+20)pt.y=-20;
+        if(tc.on){const d=Math.sqrt((tc.x-pt.x)**2+(tc.y-pt.y)**2)||1;const R=120*touchSense;if(d<R){const f=2*touchSense*(1+(1-d/R));pt.x+=(pt.x-tc.x)/d*f;pt.y+=(pt.y-tc.y)/d*f}}
+        const c=col(rgb[0],rgb[1],rgb[2],sat,bri);p.fill(c[0],c[1],c[2],pt.life*45*a*sat);p.circle(pt.x,pt.y,pt.size)});
+      p.blendMode(p.BLEND);
+    }
+    function drawBursts(){
+      bursts=bursts.filter(b=>b.life>0);p.blendMode(p.ADD);p.noStroke();
+      bursts.forEach(b=>{
+        if(b.vx!==undefined){b.x+=b.vx;b.y+=b.vy;b.vy+=.1;b.life-=1.5;const a2=b.life/b.ml;
+          p.fill(b.r,b.g,b.b,a2*b.int);p.circle(b.x,b.y,b.size*a2);
+          p.fill(b.r,b.g,b.b,a2*b.int*.3);p.circle(b.x-b.vx,b.y-b.vy,b.size*a2*.5);return}
+        b.radius+=3.5;b.life-=1.5;const a2=b.life/b.ml;
+        p.noFill();p.stroke(b.r,b.g,b.b,a2*b.int*.6);p.strokeWeight(2+a2*3);
+        p.ellipse(b.x,b.y,b.radius*2,b.radius*1.1);p.noStroke();
+        p.fill(b.r,b.g,b.b,a2*b.int*.12);p.ellipse(b.x,b.y,b.radius*2,b.radius*1.1);
+        for(let i=0;i<b.pn;i++){const ang=i*p.TWO_PI/b.pn+b.radius*.03;const pr=b.radius*(.6+Math.sin(ang*3+t)*.3);
+          p.fill(b.r,b.g,b.b,a2*b.int*.5);p.circle(b.x+Math.cos(ang)*pr,b.y+Math.sin(ang)*pr*.5,2+a2*3)}
+      });p.blendMode(p.BLEND);
+    }
+    function megaBurst(x,y,r,g,b,sat){
+      const int=50+sat*150;
+      for(let w=0;w<4;w++)bursts.push({x,y,radius:5+w*18,life:80+w*12,ml:80+w*12,r,g,b,int:int*(1-w*.15),pn:10+w*4});
+      for(let i=0;i<Math.floor(10+sat*25);i++){const ang=i*p.TWO_PI/(10+sat*25)+p.random(-.2,.2);const spd=4+sat*8;
+        bursts.push({x,y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,r,g,b,life:50+sat*30,ml:50+sat*30,size:2+sat*5,int:int*.5})}
+    }
+
+    // ══════════════════════════════════════════
+    // 장면 그리기 — 일간 유형별 + 십신 환경
+    // ══════════════════════════════════════════
+
+
+    function drawBonfireScene(){
+      const spec=metaphor.spec,ctx=p.drawingContext,a=Math.min(introAnim,1);
+      const night=spec.stage.night;
+      // ── 사주 수치로 장면을 다르게 ── 불=火, 장작=木, 흙=土, 물=水, 금=金
+      const ohc=spec.a.ohc;
+      const fireN=ohc.화,woodN=ohc.목,earthN=ohc.토,waterN=ohc.수,metalN=ohc.금;
+      const strong=spec.a.isStrong,str=spec.a.strengthScore; // -1~+1
+      const fireK=Math.min(1,fireN/4),woodK=Math.min(1,woodN/4);
+      const bright=strong?1:0.68; // 신강=밝고 왕성, 신약=사그라듦
+      // Preserve the luminous, dark animated aesthetic while letting daylight enter the horizon.
+      skyG(night?5:13,night?7:18,night?23:34,night?18:65,night?22:78,night?46:95,.65,.85,.73);
+      if(night)stars2(45,.45,.8);
+      ctx.save();ctx.globalAlpha=a;
+      const sunX=W*.80,sunY=H*.19;
+      const sun=ctx.createRadialGradient(sunX,sunY,0,sunX,sunY,W*.17);
+      sun.addColorStop(0,night?'rgba(192,200,239,.12)':'rgba(238,205,145,.20)');sun.addColorStop(1,'transparent');
+      ctx.fillStyle=sun;ctx.fillRect(0,0,W,H);ctx.fillStyle=night?'#a6aec8':'#d2bd86';ctx.globalAlpha=a*.7;
+      ctx.beginPath();ctx.arc(sunX,sunY,Math.min(W,H)*.031,0,Math.PI*2);ctx.fill();
+      for(let layer=0;layer<3;layer++){
+        ctx.beginPath();ctx.moveTo(-20,H*.73);
+        for(let i=0;i<=10;i++){const x=i*W/9;const y=H*(.57+layer*.055)-Math.sin(i*1.73+layer*2)*H*(.055-layer*.01);ctx.lineTo(x,y);}
+        ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle=['#283345','#202d38','#172629'][layer];ctx.globalAlpha=a*(.45+layer*.18);ctx.fill();
+      }
+      const cx=W*.5,gy=H*.70,size=Math.min(W,H),hover=tc.on?Math.max(0,1-Math.hypot(tc.x-cx,tc.y-(gy-size*.1))/(size*.24)):0;
+      // 불꽃 크기: 火 많고 신강할수록 크고 높게
+      const flameH=size*(.11+fireK*.15)*(strong?1.12:.82)*(1+hover*.2),flameW=size*(.032+fireK*.032);
+      ctx.globalAlpha=a;
+      const halo=ctx.createRadialGradient(cx,gy-flameH*.5,2,cx,gy-flameH*.5,flameH*1.7);
+      halo.addColorStop(0,`rgba(255,169,69,${(.14+fireK*.14)*bright})`);halo.addColorStop(.45,'rgba(222,100,33,.08)');halo.addColorStop(1,'transparent');ctx.fillStyle=halo;ctx.fillRect(0,0,W,H);
+      // 土(식상·흙더미): 土 2개 이상이면 불 둘레에 흙더미
+      if(earthN>=2){
+        for(let i=0;i<earthN;i++){const mx=cx+(i-(earthN-1)/2)*size*.15,mw=size*(.085+.018*((i*7)%3));
+          ctx.fillStyle='rgba(120,92,52,.5)';ctx.beginPath();ctx.ellipse(mx,gy+size*.028,mw,size*.03,0,Math.PI,Math.PI*2);ctx.fill();
+          ctx.fillStyle='rgba(150,118,70,.35)';ctx.beginPath();ctx.ellipse(mx,gy+size*.022,mw*.6,size*.018,0,Math.PI,Math.PI*2);ctx.fill();}
+      }
+      ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(cx,gy+size*.017,size*(.1+woodK*.06),size*.021,0,0,Math.PI*2);ctx.fill();
+      // 장작(木): 木 개수만큼 통나무 (교차해 쌓임)
+      const logN=2+Math.min(4,woodN);
+      for(let i=0;i<logN;i++){
+        ctx.save();ctx.translate(cx,gy+size*.006+i*2);ctx.rotate((i%2?1:-1)*(.19+i*.03));
+        const wood=ctx.createLinearGradient(0,-size*.015,0,size*.015);wood.addColorStop(0,'#846249');wood.addColorStop(.5,'#4b3428');wood.addColorStop(1,'#251e1c');
+        ctx.fillStyle=wood;ctx.beginPath();ctx.roundRect(-size*.09,-size*.011,size*.18,size*.023,size*.01);ctx.fill();
+        ctx.strokeStyle='rgba(226,145,79,.25)';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(-size*.07,-2);ctx.lineTo(size*.07,-2);ctx.stroke();ctx.restore();
+      }
+      // 불꽃 혀: 火 개수만큼 (많을수록 넓고 풍성)
+      ctx.globalCompositeOperation='screen';
+      const tongues=4+Math.round(fireK*5);
+      for(let i=0;i<tongues;i++){
+        const x=cx+(i-(tongues-1)/2)*flameW*.52,y=gy-size*.009;
+        const h=flameH*(.6+.4*Math.sin(i*2.3+t*2.4)**2),w=flameW*(.72+Math.sin(t*3+i)*.08),sway=Math.sin(t*3.5+i)*w*.23;
+        const flame=ctx.createLinearGradient(0,y,0,y-h);flame.addColorStop(0,`rgba(255,104,39,${.12*bright})`);flame.addColorStop(.35,`rgba(255,169,67,${.30*bright})`);flame.addColorStop(.8,`rgba(255,209,133,${.52*bright})`);flame.addColorStop(1,'rgba(255,221,164,0)');
+        ctx.fillStyle=flame;ctx.beginPath();ctx.moveTo(x-w,y);ctx.bezierCurveTo(x-w*1.6,y-h*.42,x+w*.5+sway,y-h*.77,x+sway,y-h);ctx.bezierCurveTo(x+w*.1+sway,y-h*.65,x+w*1.5,y-h*.25,x+w,y);ctx.closePath();ctx.fill();
+      }
+      const core=ctx.createRadialGradient(cx,gy-flameH*.24,0,cx,gy-flameH*.24,flameH*.37);core.addColorStop(0,`rgba(255,239,202,${.48*bright})`);core.addColorStop(1,'transparent');ctx.fillStyle=core;ctx.fillRect(cx-flameH,gy-flameH,flameH*2,flameH*1.5);
+      // 불티: 火 많을수록 많이·높이 솟음
+      const sparkN=10+Math.round(fireK*34);
+      for(let i=0;i<sparkN;i++){
+        const phase=(t*(.10+(i%5)*.009)+i*.137)%1;
+        const x=cx+Math.sin(i*2.8+t*.6)*size*(.025+phase*.08),y=gy-phase*size*(.28+fireK*.22);
+        ctx.fillStyle=`rgba(255,${165+i%4*15},85,${(1-phase)*.65*bright})`;ctx.beginPath();ctx.arc(x,y,(.6+i%3*.45)*(1-phase*.4),0,Math.PI*2);ctx.fill();
+      }
+      ctx.globalCompositeOperation='source-over';
+      // 새순/땔감(木): 木 개수만큼 둘레에 돋아남
+      ctx.lineWidth=1.3;ctx.strokeStyle=`rgba(120,169,130,${.3+woodK*.28})`;
+      const shootN=Math.min(16,4+woodN*2);
+      for(let i=0;i<shootN;i++){const x=W*(.12+i*(.76/Math.max(1,shootN-1)));if(Math.abs(x-cx)<size*.1)continue;const y=gy+size*.035,sh=size*(.028+woodK*.045);ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x-5,y-sh*.6,x+Math.sin(t*.8+i)*3,y-sh);ctx.stroke();}
+      // 水(관살): 水 2개 이상이면 곁에 작은 물웅덩이 (불을 위협)
+      if(waterN>=2){const pw=size*(.07+Math.min(waterN,4)*.02);ctx.fillStyle='rgba(90,140,200,.3)';ctx.beginPath();ctx.ellipse(cx+size*.3,gy+size*.05,pw,pw*.2,0,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='rgba(180,210,240,.3)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(cx+size*.3,gy+size*.05,pw*.6,pw*.12,0,0,Math.PI*2);ctx.stroke();}
+      // 金(재성): 金 2개 이상이면 둘레에 반짝이는 보석 조각
+      if(metalN>=2){for(let i=0;i<metalN;i++){const gx=cx-size*.32+i*size*.05,gy2=gy+size*.02,tw=.5+.5*Math.sin(t*2+i);ctx.fillStyle=`rgba(230,224,210,${.4+tw*.4})`;ctx.beginPath();ctx.moveTo(gx,gy2-4);ctx.lineTo(gx+3,gy2);ctx.lineTo(gx,gy2+4);ctx.lineTo(gx-3,gy2);ctx.closePath();ctx.fill();}}
+      ctx.restore();drawParts(meta.baseHue,Math.max(myE.sat,.4),Math.max(myE.bri,.7));
+    }
+
+    function drawScene(){
+      if(meta.visual==='bonfire'){drawBonfireScene();return;}
+      const a=p.constrain(introAnim*2-.3,0,1);
+      const vis=meta.visual;
+      const myS=myE.sat, myB=myE.bri;
+      const gwS=gwanE.sat, gwB=gwanE.bri;
+
+      // ── 배경: 신강=밝은 분위기, 신약=어두운 분위기 ──
+      const bgBri=isStrong?.7:.4;
+
+      // === 촛불/등불 계열 (丁) — 포인트: 가뭄·폭풍우 속에서도 꺼지지 않는 작은 불 ===
+      if(vis==='candle'){
+        // 하늘 (관살 강하면 폭풍, 약하면 고요)
+        const stormLevel=gwS;
+        skyG(3+stormLevel*15,5,20+stormLevel*10,8+stormLevel*20,10,35+stormLevel*15,
+          Math.max(myS,gwS,.15),bgBri,.58);
+        stars2(60-Math.floor(stormLevel*40),Math.max(E['금'].sat,.1),E['금'].bri);
+
+        // 폭풍 구름 (관살 강할수록)
+        if(stormLevel>.15){
+          p.noStroke();
+          for(let i=0;i<Math.floor(5+stormLevel*10);i++){
+            const cx=p.random(W),cy=p.random(H*.05,H*.35);
+            const c=col(30,35,50,stormLevel*.3,bgBri);
+            p.fill(c[0],c[1],c[2],(15+stormLevel*30)*a);
+            p.ellipse(cx+Math.sin(t*.3+i)*20,cy,W*(.1+stormLevel*.15),H*(.04+stormLevel*.03));
+          }
+          // 비 (수 관살이면) — 전체 화면에 내림
+          if(gwanOh==='수'){
+            const rc=col(150,180,220,gwS,gwB);
+            p.stroke(rc[0],rc[1],rc[2],(15+gwS*35)*a);p.strokeWeight(.5+gwS*.8);
+            const rainN=Math.floor(80+gwS*250);
+            for(let i=0;i<rainN;i++){
+              const rx=(i*W/rainN*1.7+Math.sin(i*3.7)*W*.1)%W;
+              const ry=(i*H/rainN*2.3+t*200*(1+gwS))%(H*1.1)-H*.05;
+              const rLen=6+gwS*14+Math.sin(i)*3;
+              p.line(rx,ry,rx-1,ry+rLen);
+            }
+          }
+        }
+
+        // 바다/대지 (관살이 水이고, 水가 2개 이상이며 土보다 많을 때만 바다)
+        const envY=H*.6;
+        const isOceanEnv=gwanOh==='수'&&E['수'].n>=2&&E['수'].n>E['토'].n;
+        if(isOceanEnv){
+          water(envY,8,25+gwS*40,50+gwS*55,gwS,gwB);
+          wavesF(envY-H*.02,180,220,255,gwS,gwB,8+gwS*18,4+Math.floor(gwS*5));
+          // 소용돌이
+          if(gwS>.2){
+            p.noFill();const wc=col(220,240,255,gwS,gwB);
+            p.stroke(wc[0],wc[1],wc[2],(60+gwS*60)*a);p.strokeWeight(1.2);
+            for(let i=0;i<3;i++){const sx=W*(.2+i*.3),sy=envY+H*(.1+i*.05);const sz=10+gwS*15;
+              p.beginShape();for(let ag=0;ag<p.PI*2.5;ag+=.12){const cr=sz*(1-ag/(p.PI*3.5));if(cr<1)break;
+                p.vertex(sx+Math.cos(ag+t*.4)*cr,sy+Math.sin(ag+t*.4)*cr*.4)}p.endShape()}
+          }
+        } else {
+          // 대지
+          const gc=col(40,50,35,E['토'].sat,E['토'].bri);
+          p.noStroke();p.fill(gc[0],gc[1],gc[2],230*a);p.rect(0,envY,W,H-envY);
+        }
+
+        // ── 촛불 본체 (일간 = 나) ──
+        const cx=W*.5, cy=envY-H*.05;
+        const candleH=H*(.08+myS*.12)*(isStrong?1.3:.7);
+        const candleW=W*(.008+myS*.006);
+
+        // 촛대
+        const cdC=col(180,170,140,myS,myB);
+        p.noStroke();p.fill(cdC[0],cdC[1],cdC[2],220*a);
+        p.rect(cx-candleW,cy,candleW*2,candleH);
+        p.fill(cdC[0]*.8,cdC[1]*.8,cdC[2]*.8,200*a);
+        p.ellipse(cx,cy+candleH,candleW*4,candleH*.12);
+
+        // 불꽃 (촛불의 핵심)
+        const flameY=cy-candleH*.08;
+        const flameH=candleH*(.3+myS*.4);
+        const flicker=Math.sin(t*8)*.15+Math.sin(t*13)*.1;
+        // 터치 반응
+        let touchFire=0;
+        if(tc.on){const d=p.dist(tc.x,tc.y,cx,flameY);if(d<100+myS*80)touchFire=Math.pow((100+myS*80-d)/(100+myS*80),1.5)}
+        const fMult=1+touchFire*4;
+
+        p.blendMode(p.ADD);p.noStroke();
+        // 외부 글로우
+        const fgc=col(255,180,50,myS,myB);
+        for(let r=flameH*2*fMult;r>3;r-=3){
+          p.fill(fgc[0],fgc[1],fgc[2],p.map(r,flameH*2*fMult,3,0,(3+myS*10)*fMult)*a);
+          p.ellipse(cx+flicker*r*.1,flameY-flameH*.3,r*1.5,r*2);
+        }
+        // 불꽃 형태 (안쪽 밝은 코어)
+        const fcC=col(255,250,200,myS,myB);
+        p.fill(fcC[0],fcC[1],fcC[2],(60+myS*120)*a*fMult);
+        p.beginShape();
+        p.vertex(cx-candleW*2,flameY);
+        p.bezierVertex(cx-candleW*3,flameY-flameH*.5,cx-candleW*.5,flameY-flameH*.9,cx+flicker*5,flameY-flameH*fMult);
+        p.bezierVertex(cx+candleW*.5,flameY-flameH*.9,cx+candleW*3,flameY-flameH*.5,cx+candleW*2,flameY);
+        p.endShape(p.CLOSE);
+        // 중심 하이라이트
+        p.fill(255,255,240,(80+myS*100)*a*fMult);
+        p.ellipse(cx+flicker*3,flameY-flameH*.3,candleW*3*fMult,flameH*.5*fMult);
+
+        // 터치 시 강렬한 불빛 파동
+        if(touchFire>.2){
+          for(let w=0;w<3;w++){
+            const wr=((t*90+w*50)%(180*fMult))*touchFire;
+            p.fill(fgc[0],fgc[1],fgc[2],p.map(wr,0,180*fMult,myS*60*touchFire,0)*a);
+            p.ellipse(cx,flameY-flameH*.3,wr*2,wr*1.5);
+          }
+          // 불씨 흩날림
+          for(let i=0;i<Math.floor(touchFire*20);i++){
+            const ag=p.random(p.TWO_PI);const r=p.random(30,100)*touchFire;
+            p.fill(255,p.random(150,220),50,p.random(40,90)*touchFire*a);
+            p.circle(cx+Math.cos(ag)*r,flameY-flameH*.3+Math.sin(ag)*r*.7,p.random(2,5));
+          }
+        }
+        p.blendMode(p.BLEND);
+
+        // 비겁(동료 불꽃)이 있으면 작은 불꽃 추가
+        if(ss.bigeop>0){
+          const biCount=ss.bigeop;
+          for(let i=0;i<biCount;i++){
+            const bx=cx+(i-biCount/2+.5)*W*.15;
+            const bFlameH=flameH*.4;
+            p.blendMode(p.ADD);p.noStroke();
+            const bc=col(255,200,80,biE.sat*.7,biE.bri*.6);
+            for(let r=bFlameH*1.5;r>2;r-=3){
+              p.fill(bc[0],bc[1],bc[2],p.map(r,bFlameH*1.5,2,0,3+biE.sat*6)*a);
+              p.ellipse(bx,flameY+candleH*.3,r,r*1.5);
+            }
+            // 작은 촛대
+            p.blendMode(p.BLEND);
+            p.noStroke();p.fill(cdC[0]*.6,cdC[1]*.6,cdC[2]*.6,150*a);
+            p.rect(bx-candleW*.5,flameY+candleH*.3,candleW,candleH*.5);
+          }
+          p.blendMode(p.BLEND);
+        }
+
+        // 바다 위 촛불 반사
+        if(isOceanEnv){
+          p.blendMode(p.ADD);p.noStroke();
+          for(let i=0;i<6;i++){
+            const ry=envY+H*.02+i*H*.02;const wob=Math.sin(t*1.5+i*.6)*W*.008;
+            p.fill(fgc[0],fgc[1],fgc[2],(4+myS*10)*a*(1-i/8)*fMult);
+            p.ellipse(cx+wob,ry,W*(.01+myS*.03),H*.005);
+          }
+          p.blendMode(p.BLEND);
+        }
+
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // === 태양 계열 (丙) — 포인트: 구름을 뚫는 태양 ===
+      else if(vis==='sun'){
+        const sunSz=50+myS*120*(isStrong?1.3:.6);
+        const sunX=W*.5,sunY=H*.3;
+        // 하늘: 관살(수) 강하면 먹구름, 약하면 새벽
+        skyG(15+myS*40,10,10,40+myS*80,20+myS*30,15,myS,bgBri,.55);
+        stars2(Math.max(10,50-Math.floor(myS*40)),E['금'].sat,E['금'].bri);
+        // 먹구름 (관살=수 강할 때만) — 태양이 뚫고 나온다는 점 강조
+        if(gwanOh==='수'&&gwS>.15){
+          p.noStroke();
+          for(let i=0;i<Math.floor(8+gwS*10);i++){
+            const cx=p.random(W),cy=p.random(H*.1,H*.38);
+            const cc=col(40,45,60,gwS*.5,bgBri);
+            p.fill(cc[0],cc[1],cc[2],(25+gwS*35)*a);
+            p.ellipse(cx+Math.sin(t*.25+i)*25,cy,W*(.14+gwS*.1),H*(.05+gwS*.025));
+          }
+        }
+        // 태양 글로우 + 본체
+        glow(sunX,sunY,sunSz,255,120,30,myS,myB,2+myS);
+        circ(sunX,sunY,sunSz,255,200,80,myS,myB);
+        // 광선 — 태양이 강할수록 넓고 길게
+        p.blendMode(p.ADD);p.noStroke();
+        const rayN=8+Math.floor(myS*12);
+        for(let i=0;i<rayN;i++){
+          const ag=i*p.TWO_PI/rayN+t*.08;
+          const len=sunSz*(1+Math.max(myS,.25)*2.2);
+          const c=col(255,180,40,Math.max(myS,.3),Math.max(myB,.7));
+          p.stroke(c[0],c[1],c[2],(20+myS*40)*a);
+          p.strokeWeight(2+myS*3);
+          p.line(sunX,sunY,sunX+Math.cos(ag)*len,sunY+Math.sin(ag)*len);
+        }
+        p.blendMode(p.BLEND);
+        // 대지
+        const gc=col(60,45,25,E['토'].sat,E['토'].bri);
+        p.noStroke();p.fill(gc[0],gc[1],gc[2],230*a);p.rect(0,H*.6,W,H*.4);
+        mt(W*.3,H*.6,W*.35,H*.1,45,55,40,E['토'].sat,E['토'].bri);
+        mt(W*.75,H*.6,W*.3,H*.08,40,48,35,E['토'].sat,E['토'].bri);
+        // ── 시그니처 터치: 태양 초신성 폭발 ──
+        if(tc.on){
+          const d=p.dist(tc.x,tc.y,sunX,sunY);
+          if(d<sunSz*3){
+            const int=Math.pow((sunSz*3-d)/(sunSz*3),1.2);
+            const iMult=1+int*5;
+            p.blendMode(p.ADD);p.noStroke();
+            // 외부 화염 글로우 (화면 절반)
+            for(let r=sunSz*8*iMult;r>sunSz;r-=5){
+              p.fill(255,130,20,p.map(r,sunSz*8*iMult,sunSz,0,8*iMult)*a);
+              p.ellipse(sunX,sunY,r*2);
+            }
+            // 내부 주황 글로우
+            for(let r=sunSz*4*iMult;r>sunSz*.5;r-=4){
+              p.fill(255,200,60,p.map(r,sunSz*4*iMult,sunSz*.5,0,20*iMult)*a);
+              p.ellipse(sunX,sunY,r*2);
+            }
+            // 태양 본체 거대화
+            p.fill(255,240,150,(150+int*100)*a);
+            p.ellipse(sunX,sunY,sunSz*(2+int*4)+Math.sin(t*7)*20);
+            p.fill(255,255,240,(200+int*55)*a);
+            p.ellipse(sunX,sunY,sunSz*(1+int*2.5));
+            // 쇼크웨이브 링 (화면 너비까지)
+            for(let w=0;w<6;w++){
+              const wr=((t*140+w*60)%(Math.max(W,H)*1.1))*int;
+              p.noFill();p.stroke(255,180,50,p.map(wr,0,Math.max(W,H),int*200,0)*a);
+              p.strokeWeight(3+int*6);p.ellipse(sunX,sunY,wr*2);
+            }
+            // 방사형 광선 36개 (엄청 길게)
+            for(let i=0;i<36;i++){
+              const ag=i*p.TWO_PI/36+t*.3;
+              const len=Math.max(W,H)*int*.7;
+              p.stroke(255,220,80,int*140*a);
+              p.strokeWeight(2+int*5);
+              p.line(sunX,sunY,sunX+Math.cos(ag)*len,sunY+Math.sin(ag)*len);
+            }
+            // 불꽃 파티클 사방으로
+            for(let i=0;i<60;i++){
+              const ag=p.random(p.TWO_PI),r=p.random(sunSz,sunSz*5)*int;
+              p.noStroke();p.fill(255,p.random(120,220),p.random(30,80),int*180*a);
+              p.circle(sunX+Math.cos(ag)*r,sunY+Math.sin(ag)*r,p.random(3,8));
+            }
+            p.blendMode(p.BLEND);
+          }
+        }
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // === 큰 나무 계열 (甲) — 포인트: 도끼/바람에도 굳건한 뿌리 ===
+      else if(vis==='greatTree'){
+        skyG(10,20+myS*15,30,15,35+myS*20,50,myS,bgBri,.55);
+        stars2(30,E['금'].sat,E['금'].bri);
+        // 대지
+        const gc=col(35,50,30,E['토'].sat,E['토'].bri);
+        p.noStroke();p.fill(gc[0],gc[1],gc[2],230*a);p.rect(0,H*.65,W,H*.35);
+        // 큰 나무 (일간)
+        const tH=H*(.35+myS*.2)*(isStrong?1.2:.7);
+        const tc2=col(130,60,25,myS,myB);
+        p.stroke(tc2[0],tc2[1],tc2[2],240*a);p.strokeWeight(W*(.025+myS*.015));p.noFill();
+        p.line(W*.5,H*.65,W*.5,H*.65-tH);
+        // 뿌리
+        p.strokeWeight(W*(.012+myS*.008));
+        for(let i=0;i<5;i++){const ag=p.PI*.25+i*p.PI*.1;
+          p.line(W*.5,H*.65,W*.5+Math.cos(ag)*W*.08,H*.65+Math.sin(ag)*H*.05)}
+        // 가지
+        for(let i=0;i<6;i++){const by=H*.65-tH*(.3+i*.12);const dir=(i%2?1:-1);
+          p.strokeWeight(W*(.008+myS*.005)*(1-i*.1));
+          p.line(W*.5,by,W*.5+dir*W*(.05+myS*.03),by-tH*.06)}
+        // 잎 뭉치
+        p.noStroke();const lc=col(25,130,50,myS,myB);
+        for(let i=0;i<8+Math.floor(myS*6);i++){
+          const lx=W*.5+(i-4)*W*.035+Math.sin(i*1.5)*W*.015;
+          const ly=H*.65-tH*(.85+Math.abs(i-4)*.02)+Math.sin(i)*H*.01;
+          p.fill(lc[0]*.6,lc[1]*.6,lc[2]*.6,200*a);
+          p.ellipse(lx,ly,W*(.05+myS*.03),W*(.035+myS*.02));
+          p.fill(lc[0],lc[1],lc[2],180*a);
+          p.ellipse(lx,ly-4,W*(.04+myS*.02),W*(.025+myS*.015));
+        }
+        // 관살이 금이면 도끼/칼바람 이펙트
+        if(gwanOh==='금'&&gwS>.15){
+          p.blendMode(p.ADD);p.noStroke();
+          const gc2=col(200,210,240,gwS,gwB);
+          for(let i=0;i<Math.floor(gwS*15);i++){
+            const sx=p.random(W*.3,W*.7),sy=p.random(H*.2,H*.6);
+            const tw=Math.sin(t*3+i*2)*.5+.5;
+            p.fill(gc2[0],gc2[1],gc2[2],tw*gwS*25*a);
+            p.ellipse(sx+Math.sin(t*2+i)*10,sy,4+gwS*6,2);
+          }
+          p.blendMode(p.BLEND);
+        }
+        // ── 시그니처 터치: 거대한 생명력 폭발 ──
+        const trX=W*.5, trY=H*.65-tH*.5;
+        if(tc.on && p.dist(tc.x,tc.y,trX,trY) < W*.3){
+          const d=p.dist(tc.x,tc.y,trX,trY);
+          const int=Math.pow((W*.3-d)/(W*.3),1.2);
+          const iMult=1+int*5;
+          p.blendMode(p.ADD);p.noStroke();
+          // 거대 초록 오라 (화면 절반)
+          for(let r=W*.7*iMult*.3;r>20;r-=8){
+            p.fill(60,200,90,p.map(r,W*.7*iMult*.3,20,0,10*iMult)*a);
+            p.ellipse(trX,trY,r*2,r*1.8);
+          }
+          // 잎사귀 폭발 (사방으로)
+          for(let i=0;i<Math.floor(int*120);i++){
+            const ang=p.random(p.TWO_PI),r=p.random(20,W*.4)*int;
+            p.fill(lc[0]+p.random(-20,80),lc[1]+p.random(-20,60),lc[2],int*160*a);
+            p.ellipse(trX+Math.cos(ang)*r,trY+Math.sin(ang)*r*.85,p.random(4,10),p.random(3,7));
+          }
+          // 빛나는 꽃 파티클 (흰색/노랑)
+          for(let i=0;i<40;i++){
+            const ang=p.random(p.TWO_PI),r=p.random(30,W*.3)*int;
+            p.fill(255,p.random(220,255),p.random(150,220),int*200*a);
+            p.circle(trX+Math.cos(ang)*r,trY+Math.sin(ang)*r*.85,p.random(3,7));
+          }
+          // 쇼크웨이브 링
+          for(let w=0;w<5;w++){
+            const wr=((t*100+w*55)%(W*.8))*int;
+            p.noFill();p.stroke(100,240,120,p.map(wr,0,W*.8,int*180,0)*a);
+            p.strokeWeight(3+int*5);p.ellipse(trX,trY,wr*2,wr*1.7);
+          }
+          // 뿌리 빛줄기 (땅 아래로 방사)
+          p.stroke(200,150,60,int*180*a);p.strokeWeight(3+int*5);
+          for(let i=0;i<12;i++){
+            const ag=p.PI*.1+i*p.PI*.07;
+            const rl=W*.25*int;
+            p.line(W*.5,H*.65,W*.5+Math.cos(ag)*rl,H*.65+Math.sin(ag)*rl);
+          }
+          // 나무 주위 빛나는 기둥 느낌
+          p.stroke(180,255,200,int*150*a);p.strokeWeight(4+int*8);
+          p.noFill();
+          p.line(W*.5,H*.65,W*.5,H*.65-tH*1.3);
+          p.blendMode(p.BLEND);
+        }
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // === 대해 계열 (壬) — 포인트: 막는 모든 것을 삼키는 파도 ===
+      else if(vis==='ocean'){
+        skyG(5,8,30+myS*20,10,15,50+myS*30,myS,bgBri,.45);
+        stars2(40,E['금'].sat,E['금'].bri);
+        // 달
+        glow(W*.2,H*.12,20+E['금'].sat*30,180,210,255,E['금'].sat,E['금'].bri,1.5);
+        circ(W*.2,H*.12,20+E['금'].sat*30,235,240,255,E['금'].sat,E['금'].bri);
+        // 대해
+        water(H*.4,10,30+myS*50,55+myS*60,myS,myB);
+        wavesF(H*.38,180,220,255,myS,myB,10+myS*20,5+Math.floor(myS*5));
+        // 큰 파도
+        if(myS>.3){p.noFill();const wc=col(200,230,255,myS,myB);
+          p.stroke(wc[0],wc[1],wc[2],(50+myS*60)*a);p.strokeWeight(2+myS*2);
+          p.beginShape();for(let x=0;x<=W;x+=4){
+            p.vertex(x,H*.42+Math.sin(x*.008+t*1.5)*H*(.03+myS*.05)+Math.sin(x*.02+t*2.5)*H*.01)}
+          p.endShape()}
+        // ── 시그니처 터치: 거대한 쓰나미 벽 ──
+        if(tc.on && tc.y > H*.3){
+          const int=.95;
+          const iMult=5;
+          const waveCx=tc.x, waveCy=H*.42;
+          p.blendMode(p.ADD);p.noStroke();
+          const c=col(80,160,255,1,1);
+          // 쓰나미 거대 벽 (화면 거의 전체)
+          p.fill(50,120,220,int*180*a);
+          p.beginShape();
+          const waveW=W*.95;
+          const maxH=H*.6;
+          for(let x=-waveW;x<=waveW;x+=8){
+            const h=Math.max(0, maxH-Math.abs(x)*.3) + Math.sin(x*.03+t*3)*15;
+            p.vertex(waveCx+x,waveCy-h);
+          }
+          p.vertex(waveCx+waveW,H);
+          p.vertex(waveCx-waveW,H);
+          p.endShape(p.CLOSE);
+          // 밝은 표면 층
+          p.fill(120,200,255,int*150*a);
+          p.beginShape();
+          for(let x=-waveW;x<=waveW;x+=8){
+            const h=Math.max(0, maxH-Math.abs(x)*.3) + Math.sin(x*.03+t*3)*15;
+            p.vertex(waveCx+x,waveCy-h);
+          }
+          for(let x=waveW;x>=-waveW;x-=8){
+            const h=Math.max(0, maxH-Math.abs(x)*.3) + Math.sin(x*.03+t*3)*15;
+            p.vertex(waveCx+x,waveCy-h+30);
+          }
+          p.endShape(p.CLOSE);
+          // 거대 흰 거품 (파도 정점)
+          p.fill(240,250,255,int*255*a);
+          for(let x=-waveW;x<=waveW;x+=12){
+            const h=Math.max(0,maxH-Math.abs(x)*.3);
+            p.circle(waveCx+x,waveCy-h,p.random(6,14));
+          }
+          // 물방울 폭포 (사방으로)
+          for(let i=0;i<120;i++){
+            const ag=p.random(-p.PI,0);
+            const r=p.random(50,W*.5);
+            p.fill(180,220,255,int*200*a);
+            p.circle(waveCx+Math.cos(ag)*r,waveCy+Math.sin(ag)*r*.8,p.random(3,8));
+          }
+          // 소용돌이 링 (화면 가득)
+          for(let w=0;w<6;w++){
+            const wr=((t*100+w*55)%(W*.8))*int;
+            p.noFill();p.stroke(c[0],c[1],c[2],p.map(wr,0,W*.8,int*200,0)*a);
+            p.strokeWeight(3+int*5);p.ellipse(waveCx,waveCy,wr*2,wr*.8);
+          }
+          p.blendMode(p.BLEND);
+        }
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // === 큰 산 계열 (戊) — 포인트: 흔들림 없이 품는 거대한 산 ===
+      else if(vis==='mountain'){
+        skyG(12,15,40,18,25,55,myS,bgBri,.5);
+        stars2(30,E['금'].sat,E['금'].bri);
+        // 산맥
+        mt(W*.2,H*.85,W*.35,H*(.25+myS*.2),35,55,40,myS,myB);
+        mt(W*.5,H*.85,W*.4,H*(.35+myS*.25)*(isStrong?1.2:.7),40,65,45,myS,myB);
+        mt(W*.8,H*.85,W*.35,H*(.22+myS*.18),30,50,38,myS,myB);
+        // 대지
+        const gc=col(50,45,35,myS,myB);p.noStroke();p.fill(gc[0],gc[1],gc[2],230*a);p.rect(0,H*.85,W,H*.15);
+        // ── 시그니처 터치: 산맥 대지진 ──
+        if(tc.on){
+          const tx=tc.x,ty=tc.y;
+          const peaks=[[W*.2,H*.6],[W*.5,H*.5],[W*.8,H*.63]];
+          let nearest=peaks[0],nd=99999;
+          for(const pk of peaks){const d=p.dist(tx,ty,pk[0],pk[1]);if(d<nd){nd=d;nearest=pk}}
+          if(nd<W*.3){
+            const int=Math.pow((W*.3-nd)/(W*.3),1.2);
+            const iMult=1+int*5;
+            p.blendMode(p.ADD);p.noStroke();
+            // 거대 황금 오라
+            for(let r=W*.5*iMult*.3;r>20;r-=7){
+              p.fill(255,200,80,p.map(r,W*.5*iMult*.3,20,0,10*iMult)*a);
+              p.ellipse(nearest[0],nearest[1],r*2,r*1.5);
+            }
+            // 봉우리 자체 빛나는 삼각 광선
+            for(let r=W*.35*iMult*.3;r>30;r-=8){
+              p.fill(255,230,140,p.map(r,W*.35*iMult*.3,30,0,15*iMult)*a);
+              p.triangle(nearest[0]-r*.7,nearest[1]+r,nearest[0],nearest[1]-r*.3,nearest[0]+r*.7,nearest[1]+r);
+            }
+            // 돌조각 낙석 대량
+            for(let i=0;i<Math.floor(int*80);i++){
+              const dx=p.random(-W*.3,W*.3),dy=p.random(-H*.1,H*.2);
+              p.fill(180+p.random(75),150+p.random(50),100+p.random(30),int*180*a);
+              p.circle(nearest[0]+dx,nearest[1]+dy,p.random(3,10));
+            }
+            // 쇼크웨이브 링 (산 전체)
+            for(let w=0;w<5;w++){
+              const wr=((t*100+w*60)%(W*.8))*int;
+              p.noFill();p.stroke(255,200,100,p.map(wr,0,W*.8,int*180,0)*a);
+              p.strokeWeight(4+int*6);p.ellipse(nearest[0],nearest[1],wr*2,wr*1.3);
+            }
+            // 진동 금 빛줄기 (위로 뿜어 오름)
+            p.stroke(255,230,150,int*220*a);p.strokeWeight(3+int*5);
+            for(let i=0;i<14;i++){
+              const ag=-p.PI*.9+i*p.PI*.07;
+              const rl=W*.25*int;
+              p.line(nearest[0],nearest[1],nearest[0]+Math.cos(ag)*rl,nearest[1]+Math.sin(ag)*rl);
+            }
+            // 중심 흰 섬광
+            p.fill(255,255,220,int*200*a);
+            p.circle(nearest[0],nearest[1],30+int*80);
+            p.blendMode(p.BLEND);
+          }
+        }
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // === 꽃/덩굴 계열 (乙) — 포인트: 비바람 속에서도 피어나는 꽃 ===
+      else if(vis==='flower'){
+        skyG(15+myS*20,20+myS*15,35,25+myS*30,40+myS*20,55,myS,bgBri,.55);
+        stars2(20,E['금'].sat,E['금'].bri);
+        // 대지
+        const gc=col(30,55,28,E['토'].sat,E['토'].bri);
+        p.noStroke();p.fill(gc[0],gc[1],gc[2],230*a);p.rect(0,H*.65,W,H*.35);
+        // 풀밭 질감
+        const grassC=col(40,100,40,myS,myB);
+        for(let i=0;i<Math.floor(30+myS*50);i++){
+          p.randomSeed(i*13);const gx=p.random(W),gy=H*.65+p.random(H*.05);
+          p.stroke(grassC[0]+p.random(-10,10),grassC[1]+p.random(-15,15),grassC[2],120*a);
+          p.strokeWeight(.8);const gh=p.random(8,20+myS*15);
+          p.line(gx,gy,gx+Math.sin(t+i)*3,gy-gh);
+        }p.randomSeed(Date.now());
+        // 덩굴 (곡선)
+        p.noFill();const vineC=col(50,130,45,myS,myB);
+        p.stroke(vineC[0],vineC[1],vineC[2],180*a);p.strokeWeight(2+myS*2);
+        for(let v=0;v<3;v++){
+          p.beginShape();
+          for(let x2=0;x2<=W;x2+=W*.02){
+            p.vertex(x2,H*.63-Math.sin(x2*.005+v*2+t*.3)*H*(.02+myS*.04)-v*H*.05);
+          }p.endShape();
+        }
+        // 꽃 (일간의 핵심 표현)
+        const flowerCount=5+Math.floor(myS*10);
+        for(let i=0;i<flowerCount;i++){
+          p.randomSeed(i*37+7);
+          const fx=p.random(W*.08,W*.92);
+          const fy=H*(.45+p.random(.15))-myS*H*.05;
+          const fsz=8+myS*18+p.random(8);
+          const petalHue=p.random([330,350,10,280,300]);
+          const pc=col(...hslToRgb(petalHue,80,65),myS,myB);
+          // 줄기
+          p.stroke(vineC[0],vineC[1],vineC[2],150*a);p.strokeWeight(1.5);
+          p.line(fx,fy+fsz,fx+Math.sin(i)*5,H*.65);
+          // 꽃잎 (5장)
+          p.noStroke();
+          for(let j=0;j<5;j++){
+            const pa=j*p.TWO_PI/5+Math.sin(t+i)*.1;
+            p.fill(pc[0],pc[1],pc[2],(150+myS*80)*a);
+            p.ellipse(fx+Math.cos(pa)*fsz*.5,fy+Math.sin(pa)*fsz*.4,fsz*.6,fsz*.35);
+          }
+          // 꽃 중심
+          const ccC=col(255,230,100,myS,myB);
+          p.fill(ccC[0],ccC[1],ccC[2],(180+myS*60)*a);
+          p.circle(fx,fy,fsz*.35);
+        }p.randomSeed(Date.now());
+        // 관살이면 바람/찢기는 이펙트
+        if(gwS>.2){
+          p.blendMode(p.ADD);p.noStroke();
+          const wc=col(...hslToRgb(OH[gwanOh],60,50),gwS,gwB);
+          for(let i=0;i<Math.floor(gwS*12);i++){
+            const wx=p.random(W),wy=p.random(H*.3,H*.6);
+            p.fill(wc[0],wc[1],wc[2],gwS*15*a);
+            p.ellipse(wx+Math.sin(t*2+i)*15,wy,20+gwS*20,3);
+          }p.blendMode(p.BLEND);
+        }
+        // ── 시그니처 터치: 거대한 꽃 만개 폭풍 ──
+        const fCx=W*.5, fCy=H*.5;
+        if(tc.on && p.dist(tc.x,tc.y,fCx,fCy) < W*.3){
+          const d=p.dist(tc.x,tc.y,fCx,fCy);
+          const int=Math.pow(1-d/(W*.3),1.2);
+          const iMult=1+int*4;
+          p.blendMode(p.ADD);p.noStroke();
+          // 거대 중심 글로우 (분홍/노랑)
+          for(let r=W*.5*iMult*.3;r>20;r-=6){
+            p.fill(255,200,220,p.map(r,W*.5*iMult*.3,20,0,8*iMult)*a);
+            p.ellipse(fCx,fCy,r*2,r*1.8);
+          }
+          // 8겹 꽃잎 파문 (화면 가득)
+          for(let ring=0;ring<8;ring++){
+            const rr=((t*90+ring*55)%(W*.7))*int;
+            const petN=10+ring*4;
+            for(let j=0;j<petN;j++){
+              const ang=j*p.TWO_PI/petN+ring*.3+t*.5;
+              const ph=[330,350,10,280,300,340,60,200][(ring+j)%8];
+              const c=hslToRgb(ph,90,68);
+              p.fill(c[0],c[1],c[2],p.map(rr,0,W*.7,int*180,0)*a);
+              const px=fCx+Math.cos(ang)*rr;
+              const py=fCy+Math.sin(ang)*rr*.9;
+              // 5장 꽃잎
+              for(let k=0;k<5;k++){
+                const ka=k*p.TWO_PI/5;
+                p.ellipse(px+Math.cos(ka)*6,py+Math.sin(ka)*4,10,6);
+              }
+              // 꽃심
+              p.fill(255,220,80,p.map(rr,0,W*.7,int*200,0)*a);
+              p.circle(px,py,4);
+            }
+          }
+          // 꽃잎 파티클 대량
+          for(let i=0;i<80;i++){
+            const ang=p.random(p.TWO_PI),r=p.random(50,W*.35)*int;
+            const ph=[330,350,10,280,60][i%5];
+            const c=hslToRgb(ph,85,68);
+            p.fill(c[0],c[1],c[2],int*160*a);
+            p.ellipse(fCx+Math.cos(ang)*r,fCy+Math.sin(ang)*r*.85,p.random(4,9),p.random(3,6));
+          }
+          // 중심 초거대 노란 꽃심
+          p.fill(255,220,80,int*255*a);
+          p.circle(fCx,fCy,40+int*100);
+          p.fill(255,255,200,int*255*a);
+          p.circle(fCx,fCy,15+int*40);
+          p.blendMode(p.BLEND);
+        }
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // === 정원/밭 계열 (己) — 포인트: 척박한 땅에서도 돋아나는 새싹 ===
+      else if(vis==='garden'){
+        skyG(20+myS*25,25+myS*20,40,35+myS*30,50+myS*20,60,myS,bgBri,.5);
+        stars2(15,E['금'].sat,E['금'].bri);
+        // 부드러운 대지 (논밭 질감)
+        const soilC=col(70,55,30,myS,myB);
+        p.noStroke();p.fill(soilC[0],soilC[1],soilC[2],235*a);p.rect(0,H*.6,W,H*.4);
+        // 밭 이랑
+        p.stroke(soilC[0]*.7,soilC[1]*.7,soilC[2]*.7,100*a);p.strokeWeight(1);
+        for(let i=0;i<12;i++){const ly=H*.62+i*H*.028;
+          p.line(0,ly,W,ly+Math.sin(i)*3);}
+        // 작물/새싹
+        const sprC=col(50,140,50,myS,myB);
+        p.noStroke();
+        for(let i=0;i<Math.floor(15+myS*30);i++){
+          p.randomSeed(i*19);
+          const sx=p.random(W),sy=H*(.6+p.random(.02));
+          const sh=10+myS*20+p.random(10);
+          p.stroke(sprC[0]*.7,sprC[1]*.7,sprC[2]*.7,180*a);p.strokeWeight(1.2);
+          p.line(sx,sy,sx+Math.sin(t*.5+i)*2,sy-sh);
+          p.noStroke();p.fill(sprC[0],sprC[1],sprC[2],(160+myS*60)*a);
+          p.ellipse(sx+Math.sin(t*.5+i)*2,sy-sh,sh*.5,sh*.35);
+          p.ellipse(sx+Math.sin(t*.5+i)*2-sh*.15,sy-sh+sh*.1,sh*.4,sh*.25);
+        }p.randomSeed(Date.now());
+        // 먼 산
+        mt(W*.3,H*.6,W*.4,H*.08,40,55,40,E['토'].sat*.5,E['토'].bri*.5);
+        mt(W*.75,H*.6,W*.35,H*.06,35,48,35,E['토'].sat*.5,E['토'].bri*.5);
+        // 인성이면 비/햇빛 자양분
+        if(info.sipsin.insung>1){
+          p.blendMode(p.ADD);p.noStroke();
+          if(inOh==='수'){// 비
+            const rc=col(150,180,220,inE.sat,inE.bri);p.stroke(rc[0],rc[1],rc[2],(15+inE.sat*30)*a);p.strokeWeight(.5);
+            for(let i=0;i<Math.floor(20+inE.sat*60);i++){p.randomSeed(i*7);const rx=p.random(W),ry=(p.random(H*.6)+t*150)%(H*.6);
+              p.line(rx,ry,rx-1,ry+8+inE.sat*8);}p.randomSeed(Date.now());
+          } else {// 햇빛
+            const sc=col(255,220,100,inE.sat,inE.bri);
+            p.fill(sc[0],sc[1],sc[2],inE.sat*8*a);
+            p.ellipse(W*.7,H*.1,W*.3,W*.3);
+          }p.blendMode(p.BLEND);
+        }
+        // ── 시그니처 터치: 밭 전체 초토화급 성장 ──
+        if(tc.on && tc.y > H*.55){
+          const int=.9;
+          const iMult=5;
+          const sCx=tc.x, sCy=H*.62;
+          p.blendMode(p.ADD);p.noStroke();
+          // 거대 초록 글로우
+          for(let r=W*.6*.3;r>20;r-=7){
+            p.fill(80,240,100,p.map(r,W*.6*.3,20,0,10*iMult)*a);
+            p.ellipse(sCx,sCy,r*2,r*1.4);
+          }
+          // 치솟는 거대 새싹 무리 (화면 넓이 가득)
+          p.stroke(130,240,110,int*220*a);p.strokeWeight(3);
+          for(let i=0;i<30;i++){
+            const sx=sCx+(i-15)*(W*.025);
+            const sh=60+Math.sin(t*3+i)*25+int*80;
+            p.line(sx,sCy+30,sx+Math.sin(t+i)*5,sCy-sh);
+            // 잎
+            p.noStroke();p.fill(100,230,100,int*200*a);
+            p.ellipse(sx+Math.sin(t+i)*5,sCy-sh,12,6);
+            p.ellipse(sx+Math.sin(t+i)*5-5,sCy-sh*.7,10,5);
+            p.ellipse(sx+Math.sin(t+i)*5+5,sCy-sh*.5,9,4);
+            p.stroke(130,240,110,int*220*a);p.strokeWeight(3);
+          }
+          // 잎사귀 파티클 대량
+          p.noStroke();
+          for(let i=0;i<80;i++){
+            const ang=p.random(p.TWO_PI),r=p.random(20,W*.3);
+            p.fill(80+p.random(120),180+p.random(75),80,int*180*a);
+            p.ellipse(sCx+Math.cos(ang)*r,sCy+Math.sin(ang)*r*.6,p.random(5,12),p.random(3,7));
+          }
+          // 쇼크웨이브
+          for(let w=0;w<4;w++){
+            const wr=((t*90+w*55)%(W*.7))*int;
+            p.noFill();p.stroke(100,240,120,p.map(wr,0,W*.7,int*180,0)*a);
+            p.strokeWeight(3+int*5);p.ellipse(sCx,sCy,wr*2,wr*.7);
+          }
+          p.blendMode(p.BLEND);
+        }
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // === 바위/칼날 계열 (庚) — 포인트: 용광로에서도 더 예리해지는 칼날 ===
+      else if(vis==='blade'){
+        skyG(8,8,18,15,15,30,myS,bgBri,.55);
+        stars2(40+Math.floor(E['금'].sat*30),E['금'].sat,E['금'].bri);
+        // 달
+        glow(W*.2,H*.12,20+E['금'].sat*25,180,200,240,E['금'].sat,E['금'].bri,1.5);
+        circ(W*.2,H*.12,20+E['금'].sat*25,230,235,250,E['금'].sat,E['금'].bri);
+        // 바위/칼날 지형
+        const rockC=col(100,95,90,myS,myB);
+        p.noStroke();
+        // 날카로운 바위 봉우리들
+        const peakN=5+Math.floor(myS*4);
+        for(let i=0;i<peakN;i++){
+          const px=W*(i+.5)/peakN;
+          const ph=H*(.15+myS*.2+p.noise(i)*.1)*(isStrong?1.2:.7);
+          const pw=W/peakN*.8;
+          // 날카로운 삼각형 (칼날 느낌)
+          p.fill(rockC[0]*(1-i*.03),rockC[1]*(1-i*.03),rockC[2]*(1-i*.03),230*a);
+          p.triangle(px-pw*.4,H*.8,px,H*.8-ph,px+pw*.4,H*.8);
+          // 금속 광택
+          p.blendMode(p.ADD);
+          const gc2=col(200,215,240,myS,myB);
+          p.fill(gc2[0],gc2[1],gc2[2],myS*15*a);
+          p.triangle(px-pw*.1,H*.8,px,H*.8-ph,px+pw*.05,H*.8-ph*.3);
+          p.blendMode(p.BLEND);
+        }
+        // 대지
+        p.noStroke();p.fill(rockC[0]*.5,rockC[1]*.5,rockC[2]*.5,230*a);
+        p.rect(0,H*.8,W,H*.2);
+        // 금속 파편 반짝임
+        p.blendMode(p.ADD);p.noStroke();
+        for(let i=0;i<Math.floor(10+myS*25);i++){
+          p.randomSeed(i*41);const sx=p.random(W),sy=p.random(H*.3,H*.8);
+          const tw=Math.sin(t*3+i*2)*.5+.5;
+          const sc=col(210,220,245,myS,myB);
+          p.fill(sc[0],sc[1],sc[2],tw*myS*40*a);
+          p.circle(sx,sy,1.5+myS*2);
+        }p.randomSeed(Date.now());p.blendMode(p.BLEND);
+        // 관살(화)이면 용광로 빛
+        if(gwanOh==='화'&&gwS>.15){
+          p.blendMode(p.ADD);p.noStroke();
+          const fc=col(255,100,30,gwS,gwB);
+          p.fill(fc[0],fc[1],fc[2],gwS*12*a);
+          p.ellipse(W*.5,H*.75,W*(.2+gwS*.3),H*(.05+gwS*.08));
+          p.blendMode(p.BLEND);
+        }
+        // ── 시그니처 터치: 가장 가까운 바위 봉우리에 닿을 때만 칼 베기 ──
+        if(tc.on){
+          // 봉우리 배열 재현 (앞 렌더와 동일)
+          const peakN2=5+Math.floor(myS*4);
+          let bestX=W*.5,bestY=H*.6,bestD=99999;
+          for(let i=0;i<peakN2;i++){
+            const px=W*(i+.5)/peakN2;
+            const ph=H*(.15+myS*.2+p.noise(i)*.1)*(isStrong?1.2:.7);
+            const py=H*.8-ph*.6;
+            const d=p.dist(tc.x,tc.y,px,py);
+            if(d<bestD){bestD=d;bestX=px;bestY=py;}
+          }
+          if(bestD<W*.2){
+            const int=Math.pow(1-bestD/(W*.2),1.2);
+            const iMult=1+int*5;
+            p.blendMode(p.ADD);p.noStroke();
+            const c=col(230,240,255,1,1);
+            // 거대 흰 글로우
+            for(let r=W*.6*.3*iMult;r>20;r-=6){
+              p.fill(220,235,255,p.map(r,W*.6*.3*iMult,20,0,8*iMult)*a);
+              p.ellipse(bestX,bestY,r*2);
+            }
+            // 3방향 거대 회전 베기선
+            for(let s=0;s<3;s++){
+              const slashAng=Math.sin(t*.7+s*2)*p.PI*.5+s*p.PI*.33;
+              const slashLen=Math.max(W,H)*int*.6;
+              p.push();
+              p.translate(bestX,bestY);
+              p.rotate(slashAng);
+              p.stroke(c[0],c[1],c[2],int*255*a);p.strokeWeight(5);
+              p.line(-slashLen,0,slashLen,0);
+              p.stroke(c[0],c[1],c[2],int*130*a);p.strokeWeight(15);
+              p.line(-slashLen*.8,0,slashLen*.8,0);
+              p.stroke(c[0],c[1],c[2],int*60*a);p.strokeWeight(28);
+              p.line(-slashLen*.5,0,slashLen*.5,0);
+              p.pop();
+            }
+            // 방사형 섬광 36줄 (화면 가득)
+            for(let i=0;i<36;i++){
+              const ag=i*p.TWO_PI/36+t*.5;
+              const len=Math.max(W,H)*int*.5;
+              p.stroke(c[0],c[1],c[2],int*140*a);p.strokeWeight(2+int*4);
+              p.line(bestX,bestY,bestX+Math.cos(ag)*len,bestY+Math.sin(ag)*len);
+            }
+            p.noStroke();p.fill(c[0],c[1],c[2],int*255*a);
+            p.ellipse(bestX,bestY,80+int*180);
+            // 금속 파편 대량
+            for(let i=0;i<70;i++){
+              const ag=p.random(p.TWO_PI),r=p.random(40,W*.35);
+              p.fill(200+p.random(55),210+p.random(45),240,int*180*a);
+              p.circle(bestX+Math.cos(ag)*r,bestY+Math.sin(ag)*r,p.random(2,5));
+            }
+            // 쇼크웨이브
+            for(let w=0;w<4;w++){
+              const wr=((t*150+w*60)%(W*.7))*int;
+              p.noFill();p.stroke(c[0],c[1],c[2],p.map(wr,0,W*.7,int*200,0)*a);
+              p.strokeWeight(4+int*5);p.ellipse(bestX,bestY,wr*2);
+            }
+            p.blendMode(p.BLEND);
+          }
+        }
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // === 보석/이슬 계열 (辛) — 포인트: 갈고 닦을수록 빛나는 보석 ===
+      else if(vis==='jewel'){
+        skyG(5,5,18,10,10,30,myS,bgBri,.55);
+        stars2(60+Math.floor(myS*50),myS,myB);
+        // 큰 달 (辛=달의 이미지)
+        const moonSz=30+myS*60;
+        glow(W*.5,H*.2,moonSz,200,215,250,myS,myB,2.5);
+        circ(W*.5,H*.2,moonSz,235,240,255,myS,myB);
+        // 크레이터 디테일
+        const mcc=col(200,210,230,myS*.5,myB*.8);
+        p.fill(mcc[0],mcc[1],mcc[2],25*a);
+        p.circle(W*.5-moonSz*.12,H*.2-moonSz*.08,moonSz*.2);
+        p.circle(W*.5+moonSz*.08,H*.2+moonSz*.1,moonSz*.12);
+        // 보석/결정 (지면에)
+        const gc=col(20,20,30,myS,myB);
+        p.noStroke();p.fill(gc[0],gc[1],gc[2],230*a);p.rect(0,H*.65,W,H*.35);
+        // 보석들 — 번영이면 풍성·크게·빛나게, 위협이면 성글고 어둡게
+        const jState=metaphor.spec?metaphor.spec.state:'calm';
+        const prosper=jState==='thrive'?1.7:jState==='threatened'?.55:1;
+        p.blendMode(p.ADD);
+        const jN=Math.floor((12+myS*20)*prosper);
+        for(let i=0;i<jN;i++){
+          p.randomSeed(i*43);
+          const jx=p.random(W*.05,W*.95),jy=H*(.5+p.random(.2));
+          const jsz=(5+myS*12+p.random(6))*(.75+prosper*.25);
+          const jHue=p.random([180,220,280,320,0]);
+          const jc=col(...hslToRgb(jHue,75,65),myS,myB);
+          const tw=Math.sin(t*2+i*1.5)*.4+.6;
+          // 번영이면 보석마다 은은한 글로우
+          if(prosper>1){
+            for(let r=jsz*2.4;r>jsz*.5;r-=3){p.fill(jc[0],jc[1],jc[2],p.map(r,jsz*2.4,jsz*.5,0,tw*8*prosper)*a);p.ellipse(jx,jy,r);}
+          }
+          // 다이아몬드 형태
+          p.noStroke();p.fill(jc[0],jc[1],jc[2],tw*(40+myS*60)*prosper*a);
+          p.beginShape();
+          p.vertex(jx,jy-jsz);p.vertex(jx+jsz*.6,jy);
+          p.vertex(jx,jy+jsz*.4);p.vertex(jx-jsz*.6,jy);
+          p.endShape(p.CLOSE);
+          // 빛 반사
+          p.fill(255,255,255,tw*(myS*20+prosper*12)*a);
+          p.circle(jx-jsz*.15,jy-jsz*.3,jsz*.25);
+        }p.randomSeed(Date.now());
+        // 이슬 파티클
+        for(let i=0;i<Math.floor(15+myS*30);i++){
+          p.randomSeed(i*29);const dx=p.random(W),dy=p.random(H*.4,H*.65);
+          const tw=Math.sin(t*1.8+i*1.2)*.5+.5;
+          p.fill(200,220,255,tw*myS*25*a);p.circle(dx,dy,p.random(1,3));
+        }p.randomSeed(Date.now());
+        p.blendMode(p.BLEND);
+        // 달빛 기둥
+        p.blendMode(p.ADD);p.noStroke();
+        for(let i=0;i<8;i++){
+          const ry=H*.35+i*H*.04;const wob=Math.sin(t*1.2+i*.5)*W*.005;
+          p.fill(200,215,250,(3+myS*8)*a*(1-i/10));
+          p.ellipse(W*.5+wob,ry,W*(.01+myS*.03),H*.004);
+        }p.blendMode(p.BLEND);
+        // ── 시그니처 터치: 달이 초신성급으로 폭발 ──
+        const jMx=W*.5, jMy=H*.2;
+        if(tc.on && p.dist(tc.x,tc.y,jMx,jMy) < moonSz*2){
+          const d=p.dist(tc.x,tc.y,jMx,jMy);
+          const int=Math.pow(1-d/(moonSz*2),1.2);
+          const iMult=1+int*5; // 5배 증폭
+          p.blendMode(p.ADD);p.noStroke();
+          // 거대 외부 글로우 (초신성)
+          for(let r=moonSz*10*iMult;r>moonSz;r-=6){
+            const hue=(r*.5+t*30)%360;
+            const rgb=hslToRgb(hue,80,65);
+            p.fill(rgb[0],rgb[1],rgb[2],p.map(r,moonSz*10*iMult,moonSz,0,15*iMult)*a);
+            p.ellipse(jMx,jMy,r*2);
+          }
+          // 달 본체 초거대화
+          p.fill(255,255,255,200*a);
+          p.ellipse(jMx,jMy,moonSz*(1+int*4)+Math.sin(t*8)*10);
+          p.fill(255,255,240,(80+int*120)*a);
+          p.ellipse(jMx,jMy,moonSz*(1+int*2.5));
+          // 7색 방사형 무지개 거대 광선 (화면 가장자리까지)
+          const hues=[0,45,60,120,200,260,300];
+          for(let i=0;i<hues.length*3;i++){
+            const ag=i*p.TWO_PI/(hues.length*3)+t*.5;
+            const len=Math.max(W,H)*int*.8;
+            const c=hslToRgb(hues[i%hues.length],90,65);
+            p.stroke(c[0],c[1],c[2],int*180*a);
+            p.strokeWeight(3+int*8);
+            p.line(jMx,jMy,jMx+Math.cos(ag)*len,jMy+Math.sin(ag)*len);
+          }
+          // 무지개 동심원 확장 (화면 밖까지)
+          for(let w=0;w<6;w++){
+            const wr=((t*120+w*60)%(Math.max(W,H)*1.2))*int;
+            const c=hslToRgb((w*60+t*30)%360,90,70);
+            p.noFill();p.stroke(c[0],c[1],c[2],p.map(wr,0,Math.max(W,H),int*180,0)*a);
+            p.strokeWeight(3+int*4);p.ellipse(jMx,jMy,wr*2);
+          }
+          // 크리스탈 파편 대량 산란
+          for(let i=0;i<60;i++){
+            const jh=i*18;
+            const c=hslToRgb(jh,85,70);
+            p.noStroke();p.fill(c[0],c[1],c[2],int*140*a);
+            const ag=p.random(p.TWO_PI);
+            const r=p.random(moonSz*1.5,W*.4)*int;
+            const px=jMx+Math.cos(ag)*r;
+            const py=jMy+Math.sin(ag)*r*.9;
+            const sz=p.random(3,10);
+            p.beginShape();
+            p.vertex(px,py-sz);p.vertex(px+sz*.6,py);
+            p.vertex(px,py+sz*.4);p.vertex(px-sz*.6,py);
+            p.endShape(p.CLOSE);
+          }
+          // 중심 흰 섬광
+          p.fill(255,255,255,int*255*a);
+          p.ellipse(jMx,jMy,moonSz*.5*(1+Math.sin(t*10)*.3));
+          p.blendMode(p.BLEND);
+        }
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // === 안개/이슬비 계열 (癸) — 포인트: 흩어진 안개가 다시 맺히는 이슬 ===
+      else if(vis==='mist'){
+        // 안개 자욱한 하늘 (경계 없이)
+        skyG(12,15,25,18,22,35,myS,bgBri,.7);
+        stars2(Math.max(5,30-Math.floor(myS*25)),E['금'].sat*.5,E['금'].bri*.5);
+        // 안개 레이어 (핵심 표현)
+        p.noStroke();
+        for(let i=0;i<10+Math.floor(myS*8);i++){
+          const fy=H*(.15+i*.07);
+          const c=col(160,170,185,myS*.4,myB*.7);
+          const drift=Math.sin(t*.2+i*.7)*W*.08;
+          p.fill(c[0],c[1],c[2],(12+myS*15)*a);
+          p.ellipse(W*.5+drift,fy,W*1.3,H*(.06+myS*.04));
+        }
+        // 이슬비 (얇고 섬세한 빗줄기)
+        if(myS>.1){
+          const rc=col(170,185,210,myS,myB);
+          p.stroke(rc[0],rc[1],rc[2],(10+myS*25)*a);p.strokeWeight(.4+myS*.3);
+          for(let i=0;i<Math.floor(30+myS*100);i++){
+            p.randomSeed(i*7);const rx=p.random(W),ry=(p.random(H)+t*80*myB)%H;
+            p.line(rx,ry,rx-.5,ry+5+myS*6);
+          }p.randomSeed(Date.now());
+        }
+        // 희미한 풍경 (안개 너머 보이는)
+        const silC=col(30,35,45,myS*.2,myB*.4);
+        p.noStroke();p.fill(silC[0],silC[1],silC[2],120*a);
+        // 먼 산 실루엣
+        mt(W*.25,H*.75,W*.35,H*.1,silC[0],silC[1],silC[2],myS*.2,myB*.3);
+        mt(W*.65,H*.75,W*.3,H*.08,silC[0]+5,silC[1]+5,silC[2]+5,myS*.2,myB*.3);
+        // 물웅덩이/호수
+        water(H*.75,10,18+myS*15,30+myS*20,myS*.6,myB*.6);
+        // 수면 위 물안개
+        p.noStroke();
+        for(let i=0;i<6;i++){
+          const c=col(150,160,180,myS*.3,myB*.5);
+          p.fill(c[0],c[1],c[2],(8+myS*10)*a);
+          p.ellipse(W*(.2+i*.12)+Math.sin(t*.25+i)*W*.03,H*.73,W*.15,H*.03);
+        }
+        // 이슬 방울 (떠다니는)
+        p.blendMode(p.ADD);p.noStroke();
+        for(let i=0;i<Math.floor(10+myS*30);i++){
+          p.randomSeed(i*53);
+          const dx=p.random(W),dy=p.random(H*.2,H*.7);
+          const dsz=2+myS*4+p.random(2);
+          const tw=Math.sin(t*1.5+i*1.8)*.4+.6;
+          const dc=col(190,210,240,myS,myB);
+          p.fill(dc[0],dc[1],dc[2],tw*(15+myS*30)*a);
+          p.circle(dx+Math.sin(t*.3+i)*8,dy+Math.cos(t*.4+i)*5,dsz);
+          // 하이라이트
+          p.fill(255,255,255,tw*myS*15*a);
+          p.circle(dx+Math.sin(t*.3+i)*8-dsz*.2,dy+Math.cos(t*.4+i)*5-dsz*.2,dsz*.3);
+        }p.randomSeed(Date.now());p.blendMode(p.BLEND);
+        // ── 시그니처 터치: 안개가 갈라지며 거대 이슬의 성소 ──
+        const mCx=W*.5, mCy=H*.45;
+        if(tc.on && p.dist(tc.x,tc.y,mCx,mCy) < W*.3){
+          const d=p.dist(tc.x,tc.y,mCx,mCy);
+          const int=Math.pow(1-d/(W*.3),1.2);
+          const iMult=1+int*4;
+          p.blendMode(p.ADD);p.noStroke();
+          // 거대 밝은 안개 갈라짐 (화면 절반)
+          const c=col(200,220,245,1,1);
+          for(let r=W*.5*.3*iMult;r>20;r-=6){
+            p.fill(220,235,255,p.map(r,W*.5*.3*iMult,20,0,8*iMult)*a);
+            p.ellipse(mCx,mCy,r*2,r*1.4);
+          }
+          // 초거대 이슬 방울
+          p.fill(220,235,255,int*220*a);
+          p.circle(mCx,mCy,60+int*120+Math.sin(t*5)*10);
+          p.fill(255,255,255,int*255*a);
+          p.circle(mCx,mCy,30+int*70);
+          // 하이라이트
+          p.fill(255,255,255,int*255*a);
+          p.circle(mCx-15,mCy-15,15+int*20);
+          // 주변 이슬 오비트 (여러 링)
+          for(let ring=0;ring<4;ring++){
+            const rBase=70+ring*40;
+            for(let i=0;i<20;i++){
+              const ag=i*p.TWO_PI/20+t*(.3+ring*.1);
+              const r=rBase+Math.sin(t*2+i)*20;
+              const dx=Math.cos(ag)*r,dy=Math.sin(ag)*r*.85;
+              p.fill(220,240,255,int*220*a);
+              p.circle(mCx+dx,mCy+dy,p.random(3,8));
+              // 이슬에서 중심으로 빛줄기
+              p.stroke(220,240,255,int*80*a);p.strokeWeight(1);
+              p.line(mCx+dx,mCy+dy,mCx+dx*.3,mCy+dy*.3);
+              p.noStroke();
+            }
+          }
+          // 이슬 파편 대량
+          for(let i=0;i<60;i++){
+            const ag=p.random(p.TWO_PI),r=p.random(50,W*.35);
+            p.fill(220,240,255,int*200*a);
+            p.circle(mCx+Math.cos(ag)*r,mCy+Math.sin(ag)*r*.85,p.random(2,6));
+          }
+          // 물결 파문 (화면 너비)
+          for(let w=0;w<5;w++){
+            const wr=((t*80+w*50)%(W*.7))*int;
+            p.noFill();p.stroke(c[0],c[1],c[2],p.map(wr,0,W*.7,int*180,0)*a);
+            p.strokeWeight(2+int*4);p.ellipse(mCx,mCy,wr*2);
+          }
+          p.blendMode(p.BLEND);
+        }
+        drawParts(meta.baseHue,myS*.6,myB*.7);
+      }
+
+      // === 기본 fallback ===
+      else {
+        skyG(8,10,30,15,20,50,myS,bgBri,.55);
+        stars2(50,E['금'].sat,E['금'].bri);
+        // 일간 오행 색상의 중심 오브젝트
+        const rgb=hslToRgb(meta.baseHue,60,50);
+        const objSz=40+myS*80;
+        glow(W*.5,H*.4,objSz,...rgb,myS,myB,2);
+        circ(W*.5,H*.4,objSz,...rgb,myS,myB);
+        // 대지/물
+        if(gwanOh==='수') water(H*.6,10,30,55,gwS,gwB);
+        else {const gc=col(40,45,35,E['토'].sat,E['토'].bri);p.noStroke();p.fill(gc[0],gc[1],gc[2],230*a);p.rect(0,H*.6,W,H*.4)}
+        // 터치
+        if(tc.on){const d=p.dist(tc.x,tc.y,W*.5,H*.4);if(d<objSz*2){
+          const int=Math.pow((objSz*2-d)/(objSz*2),1.5);
+          p.blendMode(p.ADD);p.noStroke();const c=col(...rgb,myS,myB);
+          p.fill(c[0],c[1],c[2],int*myS*40*a);p.ellipse(W*.5,H*.4,objSz*(2+int*3));
+          p.blendMode(p.BLEND)}}
+        drawParts(meta.baseHue,myS,myB);
+      }
+
+      // ── 문장에서 추출한 환경 오버레이 ──
+      drawStoryEnvironment();
+    }
+
+    // ══════════════════════════════════════════
+    // 스토리 환경 오버레이 (metaphor.story 기반)
+    // ══════════════════════════════════════════
+    function drawStoryEnvironment(){
+      const st = metaphor.story || {};
+      const a = p.constrain(introAnim*2-.3,0,1);
+      if(a<=0) return;
+
+      // 1. 먹구름 (storm / darkClouds)
+      if(st.storm || st.darkClouds){
+        p.noStroke();p.randomSeed(31);
+        const cloudN = st.storm ? 16 : 8;
+        for(let i=0;i<cloudN;i++){
+          const cx=p.random(W),cy=p.random(H*.02,H*.3);
+          const sw = st.storm ? W*.28 : W*.2;
+          const sh = st.storm ? H*.06 : H*.04;
+          p.fill(10,14,22,(st.storm?170:110)*a);
+          p.ellipse(cx+Math.sin(t*.25+i)*30,cy,sw,sh);
+          p.fill(25,28,40,(st.storm?120:70)*a);
+          p.ellipse(cx+Math.sin(t*.3+i)*35,cy+5,sw*.8,sh*.7);
+        }
+        p.randomSeed(Date.now());
+      }
+
+      // 2. 비 (rain / storm)
+      if(st.rain || st.storm){
+        p.stroke(160,185,225,(st.storm?110:80)*a);
+        p.strokeWeight(st.storm?1.1:.7);
+        const rainN = st.storm ? 320 : 160;
+        for(let i=0;i<rainN;i++){
+          const rx = (i*W/rainN*1.7+Math.sin(i*3.7)*W*.08)%W;
+          const ry = (i*H/rainN*2.3 + t*(st.storm?260:180))%(H*1.1)-H*.05;
+          const rLen = st.storm ? 14+Math.sin(i)*4 : 8+Math.sin(i)*3;
+          p.line(rx,ry,rx-2,ry+rLen);
+        }
+      }
+
+      // 3. 번개 플래시 (lightning)
+      if(st.storm || st.lightning){
+        const flash = Math.sin(t*1.7)*Math.sin(t*.31)*Math.sin(t*2.1);
+        if(flash > .88){
+          p.blendMode(p.ADD);
+          p.noStroke();p.fill(255,255,255,(flash-.88)*800*a);
+          p.rect(0,0,W,H);
+          // 번개 지그재그
+          if(flash>.93){
+            p.stroke(255,255,255,220*a);p.strokeWeight(2+p.random(2));
+            const sx=p.random(W*.3,W*.7);
+            let lx=sx,ly=0;
+            for(let i=0;i<6;i++){
+              const nx=lx+p.random(-30,30),ny=ly+p.random(30,80);
+              p.line(lx,ly,nx,ny);
+              lx=nx;ly=ny;
+            }
+          }
+          p.blendMode(p.BLEND);
+        }
+      }
+
+      // 4. 용광로/불꽃 기운 (fire)
+      if(st.fire){
+        p.blendMode(p.ADD);p.noStroke();
+        for(let i=0;i<8;i++){
+          const fx=W*(.1+i*.11)+Math.sin(t*.5+i)*25;
+          const fy=H*(.82+Math.sin(t*.7+i)*.02);
+          p.fill(255,90,25,50*a);
+          p.ellipse(fx,fy,W*.14,H*.09);
+          p.fill(255,160,40,35*a);
+          p.ellipse(fx,fy-5,W*.09,H*.05);
+          // 불티 올라감
+          for(let j=0;j<4;j++){
+            const sy=fy - ((t*60+j*40+i*20)%200);
+            p.fill(255,180,60,70*a);
+            p.circle(fx+Math.sin(t*2+j)*15,sy,p.random(2,4));
+          }
+        }
+        p.blendMode(p.BLEND);
+      }
+
+      // 5. 바람 (wind)
+      if(st.wind){
+        p.blendMode(p.ADD);p.noStroke();
+        p.randomSeed(71);
+        for(let i=0;i<25;i++){
+          const wy=p.random(H*.15,H*.75);
+          const wx=(p.random(W)+t*180)%W;
+          const wc = col(200,215,230,.5,.8);
+          p.fill(wc[0],wc[1],wc[2],45*a);
+          p.ellipse(wx,wy,40,2.5);
+          p.fill(wc[0],wc[1],wc[2],25*a);
+          p.ellipse(wx-10,wy+1,25,1.8);
+        }
+        p.randomSeed(Date.now());
+        p.blendMode(p.BLEND);
+      }
+
+      // 6. 홍수/범람 (flood)
+      if(st.flood){
+        p.noStroke();
+        for(let y=H*.7;y<H;y++){
+          const r=(y-H*.7)/(H*.3);
+          const c=col(p.lerp(20,10,r),p.lerp(50,30,r),p.lerp(90,60,r),.7,.6);
+          p.stroke(c[0],c[1],c[2],200*a);
+          p.line(0,y+Math.sin((y+t*50)*.05)*3,W,y+Math.sin((y+t*50)*.05+1)*3);
+        }
+        // 물결 라인
+        p.noFill();p.stroke(180,220,255,90*a);p.strokeWeight(1.5);
+        for(let i=0;i<4;i++){
+          const wy=H*.7+i*H*.07;
+          p.beginShape();
+          for(let x=0;x<=W;x+=5) p.vertex(x,wy+Math.sin(x*.02+t*2+i)*5);
+          p.endShape();
+        }
+      }
+
+      // 7. 도끼/칼 바람 (axe)
+      if(st.axe){
+        p.blendMode(p.ADD);p.noStroke();
+        p.randomSeed(47);
+        for(let i=0;i<14;i++){
+          const sx=p.random(W*.2,W*.8),sy=p.random(H*.2,H*.6);
+          const tw=Math.sin(t*3+i*2)*.5+.5;
+          p.fill(220,235,255,tw*70*a);
+          p.push();
+          p.translate(sx+Math.sin(t*2+i)*12,sy);
+          p.rotate(Math.sin(t*.5+i));
+          p.ellipse(0,0,18+Math.sin(t+i)*4,2.5);
+          p.pop();
+        }
+        p.randomSeed(Date.now());
+        p.blendMode(p.BLEND);
+      }
+
+      // 8. 피어나는 꽃잎 상승 (bloom)
+      if(st.bloom){
+        p.blendMode(p.ADD);p.noStroke();
+        for(let i=0;i<30;i++){
+          p.randomSeed(i*23);
+          const px=p.random(W);
+          const py=(p.random(H)+t*40)%(H*1.2)-H*.1;
+          const hue=[330,350,10,280,310][i%5];
+          const rgb=hslToRgb(hue,75,68);
+          p.fill(rgb[0],rgb[1],rgb[2],70*a);
+          p.ellipse(px+Math.sin(t*.6+i)*10,py,6,3.5);
+        }
+        p.randomSeed(Date.now());
+        p.blendMode(p.BLEND);
+      }
+
+      // 9. 자양분 햇빛 (nurture)
+      if(st.nurture && !st.storm){
+        p.blendMode(p.ADD);p.noStroke();
+        const ng=hslToRgb(50,70,70);
+        for(let i=0;i<12;i++){
+          const ag=Math.PI*.25+i*Math.PI*.04;
+          const sx=W*.7,sy=H*.15;
+          p.fill(ng[0],ng[1],ng[2],20*a);
+          for(let step=0;step<12;step++){
+            const rr=step*25;
+            p.ellipse(sx+Math.cos(ag)*rr,sy+Math.sin(ag)*rr,30,30);
+          }
+        }
+        p.blendMode(p.BLEND);
+      }
+    }
+
+    // ── 캘리그래피 선 그리기 ──
+    function drawCalliStrokes(){
+      const ctx=p.drawingContext;
+      calliStrokes.forEach(s=>{
+        if(s.pts.length<2)return;
+        // 1. 글로우 레이어
+        ctx.save();
+        ctx.shadowBlur=8*s.cfg.glowM;
+        ctx.shadowColor=`hsla(${s.hue},100%,50%,0.3)`;
+        ctx.beginPath();ctx.moveTo(s.pts[0].x,s.pts[0].y);
+        for(let i=1;i<s.pts.length;i++){
+          const mx=(s.pts[i-1].x+s.pts[i].x)/2,my=(s.pts[i-1].y+s.pts[i].y)/2;
+          ctx.quadraticCurveTo(s.pts[i-1].x,s.pts[i-1].y,mx,my);
+        }
+        ctx.strokeStyle=`hsla(${s.hue},88%,58%,0.04)`;
+        ctx.lineWidth=12;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+        ctx.shadowBlur=0;
+        // 2. 중간 코어
+        ctx.strokeStyle=`hsla(${s.hue},92%,65%,0.12)`;ctx.lineWidth=4;ctx.stroke();
+        // 3. 중심선
+        const pulse=.5+Math.sin(t*2+s.born)*.2;
+        ctx.strokeStyle=`hsla(${s.hue},100%,85%,${pulse*.5})`;
+        ctx.lineWidth=s.cfg.lineW;ctx.stroke();
+        ctx.restore();
+
+        // 4. 파티클 업데이트
+        const maxT=Math.max(s.pts.length-1,.01);
+        ctx.globalCompositeOperation='lighter';
+        s.sparkParts.forEach(sp=>{
+          sp.t+=sp.spd*sp.dir;
+          if(sp.t>maxT)sp.t=0;if(sp.t<0)sp.t=maxT;
+          const pos=calliPos(s,sp.t);const{nx,ny}=calliNorm(s,sp.t);
+          const wave=Math.sin((sp.t/maxT)*Math.PI*2*sp.freq+t*3+sp.phase)*sp.amp;
+          const px=pos.x+nx*wave,py=pos.y+ny*wave;
+          const hue2=(s.hue+sp.hShift+Math.sin(t*.5)*15+360)%360;
+          const alpha=(.2+Math.sin(t*2+sp.phase)*.1)*(s.cfg.sparkly?1.2:1);
+          ctx.beginPath();ctx.arc(px,py,sp.sz,0,Math.PI*2);
+          ctx.fillStyle=`hsla(${hue2},100%,75%,${alpha})`;ctx.fill();
+        });
+        ctx.globalCompositeOperation='source-over';
+
+        // 5. 링 이펙트
+        if(s.pts.length>2&&Math.random()<(s.cfg.sparkly?.04:.02)){
+          const ti=Math.random()*(s.pts.length-1);const pos=calliPos(s,ti);
+          s.rings.push({x:pos.x,y:pos.y,r:1,maxR:(15+Math.random()*30)*s.cfg.glowM,alpha:.3});
+        }
+        s.rings=s.rings.filter(r=>r.alpha>.005&&r.r<r.maxR);
+        s.rings.forEach(r=>{
+          r.r+=.8+r.r*.02;r.alpha*=.94;
+          ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,Math.PI*2);
+          ctx.strokeStyle=`hsla(${s.hue},90%,75%,${r.alpha*.2})`;
+          ctx.lineWidth=.4;ctx.stroke();
+        });
+      });
+    }
+
+    // ── 메인 루프 ──
+
+    function drawAtmosphere(){
+      const ctx=p.drawingContext,rgb=hslToRgb(meta.baseHue,65,66),a=Math.min(introAnim,1);
+      ctx.save();ctx.globalAlpha=a;
+      // A luminous horizon connects the scene to its elemental palette.
+      const halo=ctx.createRadialGradient(W*.50,H*.51,0,W*.50,H*.51,W*.48);
+      halo.addColorStop(0,`rgba(${rgb.join(',')},.09)`);halo.addColorStop(1,`rgba(${rgb.join(',')},0)`);
+      ctx.fillStyle=halo;ctx.fillRect(0,0,W,H);
+      ctx.globalCompositeOperation='screen';
+      for(let k=0;k<9;k++){
+        const drift=Math.sin(t*.16+k*.21)*H*.018,y=H*(.30+k*.009)+drift;
+        ctx.beginPath();ctx.moveTo(-W*.1,y+H*.16);
+        ctx.bezierCurveTo(W*.22,y-H*.17,W*.37,y+H*.22,W*.58,y);
+        ctx.bezierCurveTo(W*.76,y-H*.16,W*.91,y-H*.1,W*1.1,y+H*.06);
+        ctx.strokeStyle=`rgba(${k%3===0?'177,153,215':rgb.join(',')},${.035+k*.006})`;ctx.lineWidth=k%3===0?1.1:.55;ctx.stroke();
+      }
+      // Two depths of drifting luminous dust.
+      for(let i=0;i<44;i++){
+        const x=((i*137.7+Math.sin(t*.12+i)*24)%1000)/1000*W;
+        const y=H*(.15+((i*83)%650)/1000)+Math.sin(t*.32+i*2)*9;
+        const alpha=(.16+Math.sin(t*.65+i)*.10)*(i%3===0?1:.5);
+        ctx.fillStyle=`rgba(${i%3===0?'220,205,244':rgb.join(',')},${alpha})`;
+        ctx.beginPath();ctx.arc(x,y,i%3===0?1.4:.7,0,Math.PI*2);ctx.fill();
+      }
+      // A faint reflection rests below the central subject.
+      for(let i=0;i<12;i++){
+        const y=H*(.70+i*.014),w=W*(.018+i*.007),x=W*.5+Math.sin(t*.6+i*.8)*W*.01;
+        ctx.fillStyle=`rgba(${rgb.join(',')},${.065*(1-i/12)})`;ctx.fillRect(x-w,y,w*2,1);
+      }
+      ctx.globalCompositeOperation='source-over';
+      const vignette=ctx.createRadialGradient(W*.5,H*.47,W*.18,W*.5,H*.47,W*.72);
+      vignette.addColorStop(0,'transparent');vignette.addColorStop(1,'rgba(3,3,14,.5)');ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);ctx.restore();
+    }
+
+    p.draw=function(){
+      if(document.hidden)return;
+      t+=Math.min(p.deltaTime,70)*.001;
+      if(introAnim<1)introAnim=Math.min(1,introAnim+p.deltaTime*.0006);
+      p.background(5,5,12);
+      drawScene();
+      drawAtmosphere();
+      drawStateTreatment();
+      drawTouchAura();
+      drawBursts();
+      drawCalliStrokes();
+      if(motionPaused&&introAnim>=1)p.noLoop();
+    };
+
+    // ── 이벤트 ──
+    p.mouseMoved=function(){tc.x=p.mouseX;tc.y=p.mouseY;tc.on=true};
+    p.mouseDragged=function(){
+      tc.x=p.mouseX;tc.y=p.mouseY;tc.on=true;
+      if(calliActive) calliPush(calliActive,p.mouseX,p.mouseY);
+    };
+    p.mousePressed=function(){
+      if(p.mouseX<0||p.mouseY<0||p.mouseX>W||p.mouseY>H)return;
+      // 캘리그래피 선 시작
+      const hue=calliNextHue();
+      calliActive=calliNewStroke(hue);
+      calliPush(calliActive,p.mouseX,p.mouseY);
+      calliStrokes.push(calliActive);if(calliStrokes.length>20)calliStrokes.shift();
+      // 버스트도 동시에
+      handleTouch(p.mouseX,p.mouseY);
+    };
+    p.mouseReleased=function(){
+      if(calliActive&&calliActive.pts.length>=2){
+        if(!calliActive.sparkParts.length) calliInitParts(calliActive);
+        // 끝 버스트
+        const last=calliActive.pts[calliActive.pts.length-1];
+        for(let i=0;i<3;i++)calliActive.rings.push({x:last.x,y:last.y,r:1+i*2,maxR:25+i*12,alpha:.4-i*.08});
+      }
+      calliActive=null;
+    };
+    p.touchStarted=function(event){
+      if(event&&event.target.tagName!=='CANVAS')return true;
+      if(p.touches.length>0){
+        tc.x=p.touches[0].x;tc.y=p.touches[0].y;tc.on=true;
+        const hue=calliNextHue();
+        calliActive=calliNewStroke(hue);
+        calliPush(calliActive,tc.x,tc.y);
+        calliStrokes.push(calliActive);if(calliStrokes.length>20)calliStrokes.shift();
+        handleTouch(tc.x,tc.y);
+      }return false;
+    };
+    p.touchMoved=function(event){
+      if(!calliActive)return true;
+      if(p.touches.length>0){
+        tc.x=p.touches[0].x;tc.y=p.touches[0].y;tc.on=true;
+        if(calliActive) calliPush(calliActive,tc.x,tc.y);
+      }return false;
+    };
+    p.touchEnded=function(){
+      if(!calliActive)return true;
+      tc.on=false;
+      if(calliActive&&calliActive.pts.length>=2){
+        if(!calliActive.sparkParts.length) calliInitParts(calliActive);
+        const last=calliActive.pts[calliActive.pts.length-1];
+        for(let i=0;i<3;i++)calliActive.rings.push({x:last.x,y:last.y,r:1+i*2,maxR:25+i*12,alpha:.4-i*.08});
+      }
+      calliActive=null;
+    };
+
+    // 주체(일간 자연물)의 대략 중심과 반응 반경 — 장면별
+    function subjectCenter(){
+      const v=meta.visual,s=Math.min(W,H);
+      if(v==='bonfire')return{x:W*.5,y:H*.70-s*.14,r:s*.26};
+      if(v==='candle')return{x:W*.5,y:H*.5,r:s*.22};
+      if(v==='sun')return{x:W*.5,y:H*.4,r:s*.34};
+      if(v==='ocean')return{x:W*.5,y:H*.6,r:s*.34};
+      if(v==='mist')return{x:W*.5,y:H*.45,r:s*.34};
+      if(v==='mountain')return{x:W*.5,y:H*.5,r:s*.3};
+      if(v==='jewel')return{x:W*.5,y:H*.6,r:s*.32};
+      if(v==='flower')return{x:W*.5,y:H*.52,r:s*.3};
+      if(v==='garden')return{x:W*.5,y:H*.62,r:s*.32};
+      if(v==='blade')return{x:W*.5,y:H*.62,r:s*.3};
+      if(v==='greatTree')return{x:W*.5,y:H*.46,r:s*.3};
+      return{x:W*.5,y:H*.45,r:s*.26};
+    }
+    // 마우스가 주체에 가까워지면 감도만큼 발광하고, 신약이면 열이 쌓여 폭발한다
+    function drawTouchAura(){
+      if(!tc.on){touchHeat=Math.max(0,touchHeat-.03);return;}
+      const c=subjectCenter(),R=c.r*touchSense;
+      const d=Math.hypot(tc.x-c.x,tc.y-c.y);
+      const prox=Math.max(0,1-d/R);
+      if(prox<=0){touchHeat=Math.max(0,touchHeat-.03);return;}
+      const rgb=hslToRgb(meta.baseHue,78,60);
+      const ctx=p.drawingContext;ctx.save();ctx.globalCompositeOperation='screen';
+      const rad=38+prox*95*touchSense;
+      const gr=ctx.createRadialGradient(tc.x,tc.y,0,tc.x,tc.y,rad);
+      gr.addColorStop(0,`rgba(${rgb.join(',')},${.28*prox*Math.min(1.4,touchSense)})`);
+      gr.addColorStop(.5,`rgba(${rgb.join(',')},${.1*prox})`);gr.addColorStop(1,'transparent');
+      ctx.fillStyle=gr;ctx.beginPath();ctx.arc(tc.x,tc.y,rad,0,Math.PI*2);ctx.fill();ctx.restore();
+      // 신약: 가까이 둘수록 열이 차오르다 폭발 / 신강: 열이 거의 안 차서 잔잔히 빛나기만
+      touchHeat+=prox*touchSense*(volatileSubj?.03:.004);
+      if(volatileSubj){
+        if(touchHeat>=1 && t-lastBoom>.55){
+          const cc=col(rgb[0],rgb[1],rgb[2],Math.max(myE.sat,.5),Math.max(myE.bri,.72));
+          megaBurst(tc.x,tc.y,cc[0],cc[1],cc[2],Math.min(1,.55+touchSense*.3));
+          touchHeat=0;lastBoom=t;
+        }
+      } else { touchHeat=Math.min(touchHeat,.6); }
+    }
+
+    // ── 문구(상태)를 그림에 입히는 공통 레이어 ── 번영/압사/위협/고요가 그림에 드러나게
+    function drawStateTreatment(){
+      const spec=metaphor.spec; if(!spec) return;
+      const a=Math.min(introAnim,1); if(a<=0) return;
+      const ctx=p.drawingContext, c=subjectCenter();
+      const sc=Math.max(0,spec.a.strengthScore); // 신강 정도 0~1
+      if(spec.state==='thrive'){
+        // 번영: 주체를 감싸는 황금 풍요의 오라 + 위로 솟는 반짝임
+        ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=a;
+        const R=c.r*(2.0+sc*.7);
+        const g=ctx.createRadialGradient(c.x,c.y,0,c.x,c.y,R);
+        g.addColorStop(0,`rgba(255,226,150,${.2+sc*.14})`);g.addColorStop(.5,`rgba(255,198,105,${.08+sc*.05})`);g.addColorStop(1,'transparent');
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(c.x,c.y,R,0,Math.PI*2);ctx.fill();
+        const N=Math.floor(46+sc*44);
+        for(let i=0;i<N;i++){
+          const ph=(t*.13+i*.137)%1;
+          const x=c.x+Math.sin(i*2.3+t*.5)*c.r*(.6+ph*1.0);
+          const y=c.y+c.r*.8-ph*R*1.05;
+          const tw=.5+.5*Math.sin(t*3+i);
+          ctx.fillStyle=`rgba(255,${214+(i%3)*12},${130+tw*70},${(1-ph)*.8*a})`;
+          ctx.beginPath();ctx.arc(x,y,(1.1+(i%3)*.9)*(1-ph*.3),0,Math.PI*2);ctx.fill();
+        }
+        ctx.restore();
+      } else if(spec.state==='crushed'){
+        // 압사: 위에서 짓누르는 무거운 그림자
+        ctx.save();ctx.globalAlpha=a;
+        const g=ctx.createLinearGradient(0,0,0,H);
+        g.addColorStop(0,'rgba(0,0,0,0.5)');g.addColorStop(.5,'rgba(0,0,0,0.18)');g.addColorStop(1,'rgba(0,0,0,0.42)');
+        ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore();
+      } else if(spec.state==='threatened'){
+        // 위협: 가장자리 어둠으로 조여옴 (기신 오버레이는 drawStoryEnvironment가 담당)
+        ctx.save();ctx.globalAlpha=a;
+        const g=ctx.createRadialGradient(c.x,c.y,Math.min(W,H)*.2,c.x,c.y,Math.max(W,H)*.6);
+        g.addColorStop(0,'transparent');g.addColorStop(1,'rgba(2,4,12,0.55)');
+        ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore();
+      }
+    }
+
+    function handleTouch(x,y){
+      const rgb=hslToRgb(meta.baseHue,70,55);
+      const c=col(rgb[0],rgb[1],rgb[2],myE.sat,myE.bri);
+      megaBurst(x,y,c[0],c[1],c[2],Math.min(1,Math.max(myE.sat,.3)*(.5+touchSense*.4)));
+    }
+
+    p.clearInk=()=>{calliStrokes=[];bursts=[];};
+    // Ctrl+Z 실행취소
+    p.keyPressed=function(){
+      if((p.keyIsDown(17)||p.keyIsDown(91)||p.keyIsDown(93))&&p.key==='z'){
+        if(calliStrokes.length>0) calliStrokes.pop();
+      }
+    };
+  });
+}
+
+// ============================================================
+// UI
+// ============================================================
+function renderInfo(){
+  const el=document.getElementById('ip'),info=analysisInfo;
+  const godNames={bigeop:'비겁',siksang:'식상',jaesung:'재성',gwansal:'관살',insung:'인성'};
+  function god(c){
+    const same=c.y===info.ilgan.y,o=c.o;
+    if(o===info.myOh)return same?'비견':'겁재';
+    if(o===GENERATE[info.myOh])return same?'식신':'상관';
+    if(o===CONTROL[info.myOh])return same?'편재':'정재';
+    if(o===CTRL_BY[info.myOh])return same?'편관':'정관';
+    return same?'편인':'정인';
+  }
+  const cards=[3,2,1,0].map(i=>{const pl=sajuData[i];return `<div class="pillar ${i===2?'day':''}"><span>${['년주','월주','일주','시주'][i]}</span><b style="color:${OH_COLOR[pl.cg.o]}">${pl.cg.h}</b><b style="color:${OH_COLOR[pl.jj.o]}">${pl.jj.h}</b><small>${pl.cg.k}${pl.jj.k}</small><span>${i===2?'일간 · 나':god(pl.cg)}</span></div>`;}).join('');
+  const bars=Object.entries(info.ohCount).map(([o,n])=>`<div class="or"><div class="ol">${ON[o]} ${o}</div><div class="ob"><div class="of" style="width:${n/8*100}%;background:${OH_COLOR[o]}"></div></div><div class="on2">${n}개</div></div>`).join('');
+  const missing=Object.keys(info.ohCount).filter(o=>info.ohCount[o]===0);
+  const colors={목:['청색','#3868b4'],화:['적색','#b94d4d'],토:['황색','#d7b75b'],금:['백색','#eae5dd'],수:['흑색','#252633']};
+  el.innerHTML=`<h2>풍경 속 사주</h2><p class="note">원국 표시 · 시 일 월 년 (왼쪽이 시주, 전통 만세력식)</p><div class="pillars">${cards}</div><h3>오행의 분포</h3>${bars}<p class="note">원국 8글자 기준 · 지장간과 계절 가중치 제외</p><h3>${info.ilgan.h} 일간, ${metaphor.meta.name}</h3><p>${metaphor.desc}</p><h3>나를 둘러싼 기운</h3>${Object.entries(info.sipsin).map(([k,n])=>`<div class="siprow"><span>${godNames[k]} · ${ON[info.sipsinOh[k]]}</span><b>${n}개</b></div>`).join('')}<p class="note">일간을 제외한 7글자의 오행 관계입니다. ${godNames[info.dominant]}이 가장 두드러집니다.</p><details open><summary>그림과 사주를 함께 읽기</summary><p>${metaphor.sceneText||metaphor.name}</p><p class="note">일간은 중심 자연물로, 주변 오행은 빛·물결·식물과 움직임으로 표현합니다. 장면 선택과 물상 변형은 v4 규칙을 사용합니다. 신강·신약은 간이 판정입니다.</p></details><details><summary>오방색과 비어 있는 오행</summary><p>${missing.length?missing.map(o=>ON[o]+'('+o+')').join(', ')+'이 표면 원국에 없습니다.':'다섯 오행이 모두 나타납니다.'}</p><div class="swatches">${Object.entries(colors).map(([o,c])=>`<i style="background:${c[1]}" title="${o} · ${c[0]}"></i>`).join('')}</div><p class="note">목·청 / 화·적 / 토·황 / 금·백 / 수·흑. 부족한 개수만으로 용신이나 보완색을 확정하지는 않습니다.</p></details><details><summary>대운·세운 안내</summary><p class="note">첨부 화면의 대운처럼 정밀한 흐름을 계산하려면 생년월일·시간·성별·양력/음력 정보가 필요합니다. 현재는 원국 8글자에 대한 정보만 표시합니다.</p></details>`;
+  el.classList.add('on');
+  document.getElementById('sceneName').textContent=metaphor.name;
+  document.getElementById('sceneDesc').textContent=metaphor.desc;
+  document.getElementById('sceneQuote').textContent=metaphor.quote?`“${metaphor.quote}”`:'';
+  setTimeout(()=>document.getElementById('sceneLabel').classList.add('on'),500);
+}
+
+function go(){
+  const pls=parse(document.getElementById('si').value);
+  if(!pls){document.getElementById('err').textContent='올바른 사주 8글자를 입력하세요';return}
+  document.getElementById('err').textContent='';
+  sajuData=pls; // 입력은 년→월→일→시(쓰던 대로), 화면 표시만 시주를 왼쪽으로
+  analysisInfo=deepAnalyze(pls);
+  metaphor=selectMetaphor(analysisInfo);
+  introAnim=0;
+
+  document.body.classList.add('viewing');
+  document.getElementById('inputScreen').classList.add('hide');
+  setTimeout(()=>{
+    document.getElementById('vs').classList.add('on');
+    document.getElementById('bb').classList.add('on');
+    renderInfo();startViz();
+  },700);
+}
+
+document.getElementById('go').addEventListener('click',go);
+document.getElementById('example').onclick=()=>{document.getElementById('si').value='무진 을묘 정해 무신';go();};
+document.getElementById('erase').onclick=()=>{if(p5i){p5i.clearInk();p5i.redraw();}};
+function syncPause(){const b=document.getElementById('pause');b.textContent=motionPaused?'움직임 재생':'움직임 멈춤';b.setAttribute('aria-pressed',String(motionPaused));}
+document.addEventListener('visibilitychange',()=>{if(p5i){if(document.hidden)p5i.noLoop();else p5i.loop();}});
+document.getElementById('pause').onclick=()=>{motionPaused=!motionPaused;if(p5i)p5i.loop();syncPause();};syncPause();
+if(new URLSearchParams(location.search).get('example')==='1')document.getElementById('example').click();
+
+document.getElementById('si').addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+document.getElementById('bb').addEventListener('click',()=>{
+  document.body.classList.remove('viewing');
+  document.getElementById('vs').classList.remove('on');
+  document.getElementById('bb').classList.remove('on');
+  document.getElementById('ip').classList.remove('on');
+  document.getElementById('sceneLabel').classList.remove('on');
+  if(p5i){p5i.remove();p5i=null}
+  setTimeout(()=>document.getElementById('inputScreen').classList.remove('hide'),300);
+});
+setTimeout(()=>document.getElementById('si').focus(),300);
+</script>
+</body>
+</html>
